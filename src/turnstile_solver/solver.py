@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import logging
 import time
@@ -15,7 +14,7 @@ from .turnstile_solver_server import TurnstileSolverServer, CAPTCHA_EVENT_CALLBA
 logger = logging.getLogger(__name__)
 
 BROWSER_ARGS = {
-  "--disable-blink-features=AutomationControlled",
+  "--disable-blink-features=AutomationControlled",  # avoid navigator.webdriver detection
   "--no-sandbox",
   "--disable-dev-shm-usage",
   "--disable-background-networking",
@@ -58,7 +57,7 @@ BROWSER_ARGS = {
   '--wm-window-animations-disabled',
   '--enable-privacy-sandbox-ads-apis',
   '--disable-background-timer-throttling',
-  '--disable-popup-blocking',
+  # '--disable-popup-blocking',
   '--lang=en-US',
   '--no-default-browser-check',
   '--no-first-run',
@@ -189,11 +188,7 @@ class TurnstileSolver:
         if self._server_down:
           return
 
-        # 3. Click checkbox
-        await page.evaluate("document.querySelector('.cf-turnstile').style.width = '70px'")
-        logger.debug(".cf-turnstile.style.width = '70px'")
-
-        # 4. Wait for 'complete' event
+        # 3. Wait for 'complete' event
         try:
           cancellingEvents = [CaptchaApiMessageEvent.REJECT, CaptchaApiMessageEvent.FAIL, CaptchaApiMessageEvent.RELOAD_REQUEST]
           if self.reload_page_on_captcha_overrun_event:
@@ -269,38 +264,6 @@ class TurnstileSolver:
     page.window_height = await page.evaluate("window.innerHeight")
 
     return page
-
-  async def _scrap_token(self,
-                         page: Page,
-                         timeout: float = 20
-                         ) -> str | None:
-
-    logger.debug("Starting Turnstile response retrieval loop")
-
-    endTime = time.time() + timeout
-
-    await page.evaluate("document.querySelector('.cf-turnstile').style.width = '70px'")
-    logger.debug(".cf-turnstile.style.width = '70px'")
-
-    while time.time() < endTime:
-
-      if self._server_down:
-        return
-
-      await page.click(".cf-turnstile")
-      logger.debug(".cf-turnstile clicked")
-
-      await asyncio.sleep(1)
-
-      # for _ in range(1)
-      if token := await page.evaluate(c.TOKEN_JS_SELECTOR):
-        return token
-
-      # token = await page.eval_on_selector(
-      #   "[name=cf-turnstile-response]",
-      #   "el => el.value"
-      # )
-    logger.info("Timeout, reloading page")
 
   async def _get_browser_context(self) -> tuple[BrowserContext, Playwright]:
     playwright = await async_playwright().start()

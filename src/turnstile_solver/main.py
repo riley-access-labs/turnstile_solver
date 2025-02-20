@@ -28,7 +28,7 @@ _console = SolverConsole()
 __pname__ = "Turnstile Solver"
 
 # mdata = metadata.metadata(__pname__)
-__version__ = "0.1b"  # mdata['Version']
+__version__ = "0.2b"  # mdata['Version']
 __homepage__ = "https://github.com/odell0111/turnstile_solver"  # mdata['Home-page']
 __author__ = "OGM"  # mdata['Author']
 __summary__ = "Automatically solve Cloudflare Turnstile captcha"  # mdata['Summary']
@@ -98,8 +98,8 @@ def _parse_arguments():
   parser.add_argument("-nn", "--no-ngrok", action="store_true", help=f"Do not use ngrok for keeping server alive on production.")
   parser.add_argument("-ncomp", "--no-computations", action="store_true", help=f"Do not simulate intensive computations for keeping server alive on production.")
   parser.add_argument("--headless", action="store_true", help=f"Open browser in headless mode. WARNING: This feature has never worked so far, captcha always fail! It's here only in case it works on future version of Playwright.")
-  parser.add_argument("-bep", "--browser-executable-path", help=f"Chrome browser executable path. If not specified Playwright will attempt to use its bundled version.")
-  parser.add_argument("-bp", "--browser-position", type=int, nargs='*', metavar="x|y", default=c.BROWSER_POSITION, help=f"Browser position x, y. Default: {c.BROWSER_POSITION}. Pass empty value to center browser on screen.")
+  parser.add_argument("-bep", "--browser-executable-path", help=f"Chromium-based browser executable path. If not specified, Patchright (Playwright) will attempt to use its bundled version. Ensure you are using a Chromium-based browser installed with the command `patchright install chromium`. Other browsers may be detected by Cloudflare, which could result in the CAPTCHA not being solved.")
+  parser.add_argument("-bp", "--browser-position", type=int, nargs='*', metavar="x|y", default=c.BROWSER_POSITION, help=f"Browser position x, y. Default: {c.BROWSER_POSITION}. If the browser window is positioned beyond the screen's resolution, it will be inaccessible, behaving similar to headless mode.")
 
   # Solver
   solver = parser.add_argument_group("Solver")

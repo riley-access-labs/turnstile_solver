@@ -11,7 +11,7 @@ HTML_TEMPLATE = '''
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Turnstile Solver</title>
     <script>
-        window.addEventListener("message", function (m) {{
+        window.addEventListener("message", m => {{
            if (m.origin !== "https://challenges.cloudflare.com" || !!m.data === false) return;
 
            fetch("http://127.0.0.1:{local_server_port}/{local_callback_endpoint}?id={id}", {{
@@ -34,7 +34,7 @@ HTML_TEMPLATE = '''
     </script>
 </head>
 <body>
-<div class="cf-turnstile" data-sitekey="{site_key}"></div>
+<div class="cf-turnstile" data-sitekey="{site_key}" style="display: inline-block"></div>
 </body>
 </html>
 '''

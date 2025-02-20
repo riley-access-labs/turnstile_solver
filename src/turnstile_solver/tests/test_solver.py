@@ -21,7 +21,7 @@ def server(console: SolverConsole) -> TurnstileSolverServer:
   server = TurnstileSolverServer(
     host=HOST,
     port=PORT,
-    secret=c.SECRET,
+    secret=SECRET,
     console=console,
     log_level=logging.DEBUG,
     disable_access_logs=True,
@@ -85,6 +85,7 @@ async def test_server(solver: TurnstileSolver):
   solver.attempt_timeout = 30
   await solver.server.run(debug=True)
 
+
 def test_get_token():
 
   SERVER_URL = "http://127.0.0.1:8088"
@@ -102,6 +103,11 @@ def test_get_token():
     "site_key": "0x4AAAAAAAByvC31sFG0MSlp"
   }
 
+  # json_data = {
+  #   "site_url": "https://bypass.city/",
+  #   "site_key": "0x4AAAAAAAGzw6rXeQWJ_y2P"
+  # }
+
   response = requests.get(
     url=url,
     headers=headers,
@@ -109,7 +115,7 @@ def test_get_token():
   )
 
   response.raise_for_status()
-  
+
   data = response.json()
   token = data['token']
   elapsed = data['elapsed']

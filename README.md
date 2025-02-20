@@ -15,6 +15,10 @@ PD: This repository was initially created for personal use. I've adjusted it for
 ```bash
 pip install git+https://github.com/odell0111/turnstile_solver@main
 ```
+### Install Patchright patched chromium browser
+```bash
+patchright install chromium
+```
 
 ## How to use
 
@@ -80,6 +84,9 @@ token = data['token']
 print("Token:", token)
 
 ```
+
+## Disclaimer ‼️ 
+Use this project entirely at your own risk. I hold no responsibility for any negative outcomes, including but not limited to API blocking and IP bans
 
 ## Donate
 

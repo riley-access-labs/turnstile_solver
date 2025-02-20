@@ -1,5 +1,7 @@
 import logging
 import time
+from inspect import isawaitable
+from types import NoneType
 from typing import Callable, Any, Awaitable
 
 from typing import TYPE_CHECKING
@@ -23,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 class TurnstileSolverServer:
 
-  MessageEventHandler = Callable[[CaptchaApiMessageEvent, dict[str, Any]], None]
+  MessageEventHandler = Callable[[CaptchaApiMessageEvent, dict[str, Any]], NoneType | Awaitable[None]]
 
   def __init__(self,
                host: str = HOST,
@@ -120,7 +122,8 @@ class TurnstileSolverServer:
         if not handler:
           return self._error(f"There's no handler for handling event with ID: {id}", warning=True)
         logger.debug(f"Dispatching '{evt.value}' event")
-        handler(evt, data)
+        if isawaitable(a := handler(evt, data)):
+          await a
 
     except Exception:
       self.console.print_exception()
@@ -157,8 +160,6 @@ class TurnstileSolverServer:
         "token": result.token,
         "elapsed": str(result.elapsed.total_seconds()),
       })
-
-
     except Exception as ex:
       self.console.print_exception()
       return self._error(str(ex))
