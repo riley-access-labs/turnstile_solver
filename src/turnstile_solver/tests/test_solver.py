@@ -1,10 +1,12 @@
 import logging
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import pytest
 import requests
 
-from ..constants import HOST, PORT, SECRET
+from ..constants import HOST, PORT, SECRET, PROJECT_HOME_DIR
 from ..solver import TurnstileSolver
 from ..solver_console import SolverConsole
 from ..turnstile_solver_server import TurnstileSolverServer
@@ -13,6 +15,9 @@ host = HOST
 port = PORT
 
 logger = logging.getLogger(__name__)
+fh = logging.FileHandler(PROJECT_HOME_DIR / 'test_logs.log')
+fh.setLevel(logging.DEBUG)
+logger.addHandler(fh)
 
 
 @pytest.fixture
@@ -25,6 +30,7 @@ def server(console: SolverConsole) -> TurnstileSolverServer:
     console=console,
     log_level=logging.DEBUG,
     disable_access_logs=True,
+    ignore_food_events=True,
     turnstile_solver=None,
     on_shutting_down=None,
   )
@@ -86,11 +92,13 @@ async def test_server(solver: TurnstileSolver):
   await solver.server.run(debug=True)
 
 
-def test_get_token():
+def _get_token(
+    server_url: str,
+    site_url: str,
+    site_key: str,
+):
 
-  SERVER_URL = "http://127.0.0.1:8088"
-
-  url = f"{SERVER_URL}/solve"
+  url = f"{server_url}/solve"
 
   headers = {
     'ngrok-skip-browser-warning': '_',
@@ -99,14 +107,9 @@ def test_get_token():
   }
 
   json_data = {
-    "site_url": "https://spotifydown.com",
-    "site_key": "0x4AAAAAAAByvC31sFG0MSlp"
+    "site_url": site_url,
+    "site_key": site_key
   }
-
-  # json_data = {
-  #   "site_url": "https://bypass.city/",
-  #   "site_key": "0x4AAAAAAAGzw6rXeQWJ_y2P"
-  # }
 
   response = requests.get(
     url=url,
@@ -121,3 +124,30 @@ def test_get_token():
   elapsed = data['elapsed']
   print(f"Token: {token}\n"
         f"Elapsed: {elapsed}")
+
+
+def test_get_token():
+
+  server_url = "http://127.0.0.1:8088"
+
+  site_url, site_key = "https://spotifydown.com", "0x4AAAAAAAByvC31sFG0MSlp"
+  # site_url, site_key = "https://bypass.city/", "0x4AAAAAAAGzw6rXeQWJ_y2P"
+
+  requestCount = 10
+
+  with ThreadPoolExecutor(max_workers=min(32, requestCount)) as executor:
+    futures = []
+    for _ in range(requestCount):
+      future = executor.submit(
+        _get_token,
+        server_url,
+        site_url,
+        site_key,
+      )
+      futures.append(future)
+
+    for future in as_completed(futures):
+      try:
+        future.result()
+      except Exception as e:
+        logging.error(f"Thread failed with error: {str(e)}")

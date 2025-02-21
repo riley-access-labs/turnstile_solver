@@ -3,6 +3,7 @@ import pytest
 
 from ..solver_console import SolverConsole
 from ..utils import init_logger
+from ..constants import PROJECT_HOME_DIR
 
 _console = SolverConsole()
 
@@ -18,6 +19,10 @@ def console() -> SolverConsole:
 @pytest.hookimpl
 def pytest_configure(config: pytest.Config):
   print()
+
+  if not PROJECT_HOME_DIR.exists():
+    PROJECT_HOME_DIR.mkdir(parents=True)
+
   init_logger(
     console=_console,
     level=logging.DEBUG,

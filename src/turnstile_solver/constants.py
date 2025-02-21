@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -40,6 +42,8 @@ HTML_TEMPLATE = '''
 '''
 
 TOKEN_JS_SELECTOR = "document.querySelector('[name=cf-turnstile-response]')?.value"
+
+PROJECT_HOME_DIR = Path.home() / '.turnstile_solver'
 
 HOST = "0.0.0.0"
 PORT = 8088

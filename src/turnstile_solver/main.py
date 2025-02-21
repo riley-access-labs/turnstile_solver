@@ -28,7 +28,7 @@ _console = SolverConsole()
 __pname__ = "Turnstile Solver"
 
 # mdata = metadata.metadata(__pname__)
-__version__ = "0.2b"  # mdata['Version']
+__version__ = "0.3b"  # mdata['Version']
 __homepage__ = "https://github.com/odell0111/turnstile_solver"  # mdata['Home-page']
 __author__ = "OGM"  # mdata['Author']
 __summary__ = "Automatically solve Cloudflare Turnstile captcha"  # mdata['Summary']
@@ -100,6 +100,7 @@ def _parse_arguments():
   parser.add_argument("--headless", action="store_true", help=f"Open browser in headless mode. WARNING: This feature has never worked so far, captcha always fail! It's here only in case it works on future version of Playwright.")
   parser.add_argument("-bep", "--browser-executable-path", help=f"Chromium-based browser executable path. If not specified, Patchright (Playwright) will attempt to use its bundled version. Ensure you are using a Chromium-based browser installed with the command `patchright install chromium`. Other browsers may be detected by Cloudflare, which could result in the CAPTCHA not being solved.")
   parser.add_argument("-bp", "--browser-position", type=int, nargs='*', metavar="x|y", default=c.BROWSER_POSITION, help=f"Browser position x, y. Default: {c.BROWSER_POSITION}. If the browser window is positioned beyond the screen's resolution, it will be inaccessible, behaving similar to headless mode.")
+  parser.add_argument("-nfl", "--no-file-logs", action="store_true", help=f"Do not log to file '%HOME%/.turnstile_solver/logs.log'.")
 
   # Solver
   solver = parser.add_argument_group("Solver")
@@ -116,6 +117,7 @@ def _parse_arguments():
   server.add_argument("-s", "--secret", default=c.SECRET, help=f"Server secret. Default: {c.SECRET}.")
   server.add_argument("-lal", "--log-access-logs", action="store_true", help=f"Log server access logs.")
   server.add_argument("-svll", "--server-log-level", type=int, default=logging.INFO, metavar="N", help=f"TurnstileSolverServer log level. Default: {logging.INFO}")
+  server.add_argument("-ife", "--ignore-food-events", action="store_true", help=f"Do not log CAPTCHA foot events when server log level is DEBUG or below.")
 
   # Miscellaneous Options
   misc = parser.add_argument_group("Miscellaneous")
@@ -196,6 +198,7 @@ async def run_server(
     host: str = c.HOST,
     port: int = c.PORT,
     disable_access_logs: bool = True,
+    ignore_food_events: bool = False,
     server_log_level: int | str = logging.INFO,
     secret: str = c.SECRET,
 
@@ -219,6 +222,7 @@ async def run_server(
     on_shutting_down=None,
     console=console,
     log_level=server_log_level,
+    ignore_food_events=ignore_food_events,
   )
 
   solver = TurnstileSolver(
@@ -271,9 +275,20 @@ async def main():
     handler_level=logging.NOTSET,
     force=True,
   )
+
   _add_help_custom_highlights()
 
   args = _parse_arguments()
+
+  if not c.PROJECT_HOME_DIR.exists():
+    c.PROJECT_HOME_DIR.mkdir(parents=True)
+
+  # Register file logger
+  if not args.no_file_logs:
+    fh = logging.FileHandler(c.PROJECT_HOME_DIR / 'logs.log')
+    fh.setLevel(logging.DEBUG)
+    logging.root.addHandler(fh)
+
   if args.production and (args.no_ngrok and args.no_computations):
     logger.error("For keeping it alive you must either use Ngrok, perform computations, or both")
     return
@@ -288,6 +303,7 @@ async def main():
     host=args.host,
     port=args.port,
     disable_access_logs=not args.log_access_logs,
+    ignore_food_events=args.ignore_food_events,
     console=_console,
     server_log_level=args.server_log_level,
     secret=args.secret,

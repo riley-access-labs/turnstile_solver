@@ -31,11 +31,12 @@ class TurnstileSolverServer:
                host: str = HOST,
                port: int = PORT,
                disable_access_logs: bool = True,
+               ignore_food_events: bool = False,
                turnstile_solver: "TurnstileSolver" = None,
                on_shutting_down: Callable[..., Awaitable[None]] | None = None,
                console: SolverConsole = SolverConsole(),
                log_level: str | int = logging.INFO,
-               secret: str = SECRET
+               secret: str = SECRET,
                ):
     logger.setLevel(log_level)
     if disable_access_logs:
@@ -52,6 +53,7 @@ class TurnstileSolverServer:
     self.browser_context: BrowserContext | None = None
     self.page_pool: PagePool | None = None
     self.secret = secret
+    self.ignore_food_events = ignore_food_events
 
     self._setup_routes()
 
@@ -64,9 +66,11 @@ class TurnstileSolverServer:
     self.app.get('/')(self._index)
 
   def subscribe_captcha_message_event_handler(self, id: str, handler: MessageEventHandler):
+    logger.debug(f"Captcha message event handler with id '{id}' subscribed")
     self._captcha_message_event_handlers[id] = handler
 
   def unsubscribe_captcha_message_event_handler(self, id: str):
+    logger.debug(f"Captcha message event handler with id '{id}' unsubscribed")
     self._captcha_message_event_handlers.pop(id, None)
 
   async def create_page_pool(self):
@@ -116,12 +120,13 @@ class TurnstileSolverServer:
         return self._bad("id parameter not specified")
 
       if not self._captcha_message_event_handlers:
-        return self._error("There is no handlers for handling captcha event", warning=True)
+        return self._error("There's no handlers for handling captcha event", warning=True)
       else:
         handler = self._captcha_message_event_handlers.get(id)
         if not handler:
           return self._error(f"There's no handler for handling event with ID: {id}", warning=True)
-        logger.debug(f"Dispatching '{evt.value}' event")
+        if evt != CaptchaApiMessageEvent.FOOD or not self.ignore_food_events:
+          logger.debug(f"Dispatching '{evt.value}' event")
         if isawaitable(a := handler(evt, data)):
           await a
 
