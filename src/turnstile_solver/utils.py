@@ -44,3 +44,14 @@ def simulate_intensive_task(iterations=2500, complexity=10000):
       value = random.random() * complexity
       value **= 3
   return time.time() - startTime
+
+
+def get_file_handler(
+    path: str,
+    level: int | str = logging.DEBUG,
+):
+  handler = logging.FileHandler(path)
+  handler.setLevel(level)
+  formatter = logging.Formatter('%(asctime)s::%(levelname)s::%(name)s %(message)s, line %(lineno)d')
+  handler.setFormatter(formatter)
+  return handler

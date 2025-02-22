@@ -2,12 +2,18 @@ import logging
 import pytest
 
 from ..solver_console import SolverConsole
-from ..utils import init_logger
+from ..utils import init_logger, get_file_handler
 from ..constants import PROJECT_HOME_DIR
 
 _console = SolverConsole()
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
+_logger.addHandler(get_file_handler(PROJECT_HOME_DIR / 'test_logs.log'))
+
+
+@pytest.fixture
+def logger() -> logging.Logger:
+  return _logger
 
 
 @pytest.fixture
@@ -30,6 +36,6 @@ def pytest_configure(config: pytest.Config):
     force=True,
   )
   # Route hypercorn.error logs to __main__ logger
-  logging.getLogger("hypercorn.error")._log = logger._log
+  logging.getLogger("hypercorn.error")._log = _logger._log
   logging.getLogger('faker').setLevel(logging.WARNING)
   # logging.getLogger("werkzeug").setLevel(logging.WARNING) # flask

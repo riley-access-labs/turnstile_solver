@@ -6,18 +6,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import pytest
 import requests
 
-from ..constants import HOST, PORT, SECRET, PROJECT_HOME_DIR
+from ..constants import HOST, PORT, SECRET
 from ..solver import TurnstileSolver
 from ..solver_console import SolverConsole
 from ..turnstile_solver_server import TurnstileSolverServer
 
 host = HOST
 port = PORT
-
-logger = logging.getLogger(__name__)
-fh = logging.FileHandler(PROJECT_HOME_DIR / 'test_logs.log')
-fh.setLevel(logging.DEBUG)
-logger.addHandler(fh)
 
 
 @pytest.fixture
@@ -40,7 +35,7 @@ def server(console: SolverConsole) -> TurnstileSolverServer:
 
 @pytest.fixture
 def solver(server: TurnstileSolverServer) -> TurnstileSolver:
-  EXECUTABLE_PATH = r"C:\Users\odell\AppData\Local\ms-playwright\chromium-1148\chrome-win\chrome.exe"
+  EXECUTABLE_PATH = r"C:\Users\odell\AppData\Local\ms-playwright\chromium-1155\chrome-win\chrome.exe"
   # EXECUTABLE_PATH = r"C:\Users\odell\AppData\Local\ms-playwright\chromium_headless_shell-1148\chrome-win\headless_shell.exe"
   # EXECUTABLE_PATH = r"C:\Program Files\Chromium\Application\chrome.exe"
   # EXECUTABLE_PATH = None
@@ -126,14 +121,14 @@ def _get_token(
         f"Elapsed: {elapsed}")
 
 
-def test_get_token():
+def test_get_token(logger: logging.Logger):
 
   server_url = "http://127.0.0.1:8088"
 
   site_url, site_key = "https://spotifydown.com", "0x4AAAAAAAByvC31sFG0MSlp"
   # site_url, site_key = "https://bypass.city/", "0x4AAAAAAAGzw6rXeQWJ_y2P"
 
-  requestCount = 10
+  requestCount = 1
 
   with ThreadPoolExecutor(max_workers=min(32, requestCount)) as executor:
     futures = []

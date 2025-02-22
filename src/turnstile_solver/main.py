@@ -20,7 +20,7 @@ from .custom_rich_help_formatter import CustomRichHelpFormatter
 from .solver_console import SolverConsole
 from .solver_console_highlighter import SolverConsoleHighlighter
 from .solver import TurnstileSolver
-from .utils import init_logger, simulate_intensive_task
+from .utils import init_logger, simulate_intensive_task, get_file_handler
 from .turnstile_solver_server import TurnstileSolverServer
 
 _console = SolverConsole()
@@ -285,9 +285,7 @@ async def main():
 
   # Register file logger
   if not args.no_file_logs:
-    fh = logging.FileHandler(c.PROJECT_HOME_DIR / 'logs.log')
-    fh.setLevel(logging.DEBUG)
-    logging.root.addHandler(fh)
+    logging.root.addHandler(get_file_handler(c.PROJECT_HOME_DIR / 'logs.log'))
 
   if args.production and (args.no_ngrok and args.no_computations):
     logger.error("For keeping it alive you must either use Ngrok, perform computations, or both")
