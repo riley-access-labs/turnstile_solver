@@ -1,9 +1,9 @@
 import logging
 import pytest
 
-from ..solver_console import SolverConsole
-from ..utils import init_logger, get_file_handler
-from ..constants import PROJECT_HOME_DIR
+from turnstile_solver.solver_console import SolverConsole
+from turnstile_solver.utils import init_logger, get_file_handler
+from turnstile_solver.constants import PROJECT_HOME_DIR
 
 _console = SolverConsole()
 

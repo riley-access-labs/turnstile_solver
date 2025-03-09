@@ -1,15 +1,15 @@
 import logging
-
 import asyncio
-from concurrent.futures import ThreadPoolExecutor, as_completed
-
 import pytest
 import requests
 
-from ..constants import HOST, PORT, SECRET
-from ..solver import TurnstileSolver
-from ..solver_console import SolverConsole
-from ..turnstile_solver_server import TurnstileSolverServer
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+
+from turnstile_solver.constants import HOST, PORT, SECRET
+from turnstile_solver.solver import TurnstileSolver
+from turnstile_solver.solver_console import SolverConsole
+from turnstile_solver.turnstile_solver_server import TurnstileSolverServer
 
 host = HOST
 port = PORT
@@ -35,10 +35,7 @@ def server(console: SolverConsole) -> TurnstileSolverServer:
 
 @pytest.fixture
 def solver(server: TurnstileSolverServer) -> TurnstileSolver:
-  EXECUTABLE_PATH = r"C:\Users\odell\AppData\Local\ms-playwright\chromium-1155\chrome-win\chrome.exe"
-  # EXECUTABLE_PATH = r"C:\Users\odell\AppData\Local\ms-playwright\chromium_headless_shell-1148\chrome-win\headless_shell.exe"
-  # EXECUTABLE_PATH = r"C:\Program Files\Chromium\Application\chrome.exe"
-  # EXECUTABLE_PATH = None
+  EXECUTABLE_PATH = Path.home() / "AppData/Local/ms-playwright/chromium-1155/chrome-win/chrome.exe"
 
   s = TurnstileSolver(
     console=server.console,

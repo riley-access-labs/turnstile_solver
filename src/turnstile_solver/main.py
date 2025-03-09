@@ -28,7 +28,7 @@ _console = SolverConsole()
 __pname__ = "Turnstile Solver"
 
 # mdata = metadata.metadata(__pname__)
-__version__ = "0.3b"  # mdata['Version']
+__version__ = "1.2"  # mdata['Version']
 __homepage__ = "https://github.com/odell0111/turnstile_solver"  # mdata['Home-page']
 __author__ = "OGM"  # mdata['Author']
 __summary__ = "Automatically solve Cloudflare Turnstile captcha"  # mdata['Summary']
@@ -76,23 +76,23 @@ def _parse_arguments():
       raise argparse.ArgumentTypeError(f'"{value}" is not a number')
     return value
 
-  # def positive_float_exclusive(value):
-  #   try:
-  #     value = float(value)
-  #     if value != -1 and value <= 0:
-  #       raise argparse.ArgumentTypeError(f"{value} is not a positive number")
-  #   except ValueError:
-  #     raise argparse.ArgumentTypeError(f'"{value}" is not a number')
-  #   return value
-  #
-  # def positive_integer_exclusive(value):
-  #   try:
-  #     value = int(value)
-  #     if value != -1 and value <= 0:
-  #       raise argparse.ArgumentTypeError(f"{value} is not a positive integer")
-  #   except ValueError:
-  #     raise argparse.ArgumentTypeError(f'"{value}" is not an integer')
-  #   return value
+  def positive_float_exclusive(value):
+    try:
+      value = float(value)
+      if value != -1 and value <= 0:
+        raise argparse.ArgumentTypeError(f"{value} is not a positive number")
+    except ValueError:
+      raise argparse.ArgumentTypeError(f'"{value}" is not a number')
+    return value
+
+  def positive_integer_exclusive(value):
+    try:
+      value = int(value)
+      if value != -1 and value <= 0:
+        raise argparse.ArgumentTypeError(f"{value} is not a positive integer")
+    except ValueError:
+      raise argparse.ArgumentTypeError(f'"{value}" is not an integer')
+    return value
 
   parser.add_argument("-p", "--production", action="store_true", help=f"Whether the project is running in a production environment or on a resource-constrained server, such as one that spins down during periods of inactivity.")
   parser.add_argument("-nn", "--no-ngrok", action="store_true", help=f"Do not use ngrok for keeping server alive on production.")
@@ -100,9 +100,9 @@ def _parse_arguments():
   parser.add_argument("--headless", action="store_true", help=f"Open browser in headless mode. WARNING: This feature has never worked so far, captcha always fail! It's here only in case it works on future version of Playwright.")
   parser.add_argument("-bep", "--browser-executable-path", help=f"Chromium-based browser executable path. If not specified, Patchright (Playwright) will attempt to use its bundled version. Ensure you are using a Chromium-based browser installed with the command `patchright install chromium`. Other browsers may be detected by Cloudflare, which could result in the CAPTCHA not being solved.")
   parser.add_argument("-bp", "--browser-position", type=int, nargs='*', metavar="x|y", default=c.BROWSER_POSITION, help=f"Browser position x, y. Default: {c.BROWSER_POSITION}. If the browser window is positioned beyond the screen's resolution, it will be inaccessible, behaving similar to headless mode.")
-  parser.add_argument("-nfl", "--no-file-logs", action="store_true", help=f"Do not log to file '%HOME%/.turnstile_solver/logs.log'.")
-
-  # Solver
+  parser.add_argument("-nfl", "--no-file-logs", action="store_true", help=f"Do not log to file '$HOME.turnstile_solver/logs.log'.")
+  #
+  # # Solver
   solver = parser.add_argument_group("Solver")
   solver.add_argument("-ma", "--max-attempts", type=positive_integer, metavar="N", default=c.MAX_ATTEMPTS_TO_SOLVE_CAPTCHA, help=f"Max attempts to perform to solve captcha. Default: {c.MAX_ATTEMPTS_TO_SOLVE_CAPTCHA}.")
   solver.add_argument("-cto", "--captcha-timeout", type=positive_float, metavar="N.", default=c.CAPTCHA_ATTEMPT_TIMEOUT, help=f"Max time to wait for captcha to solve before reloading page. Default: {c.CAPTCHA_ATTEMPT_TIMEOUT} seconds.")
