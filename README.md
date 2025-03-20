@@ -5,6 +5,8 @@ Python server to automatically solve Cloudflare Turnstile CAPTCHA with an averag
 PD: This repository was initially created for personal use. I've adjusted it for sharing, but it might still be slightly disorganized. Feel free to contribute, open issues, and request new features.
 
 ## Screenshots
+
+TODO: Update
 ![Help Menu](images/help_menu.png)
 
 ![Server Console](images/server_console.png)
@@ -30,6 +32,16 @@ solver
 ```bash
 solver --port 8088 --secret jWRN7DH6 --browser-position --max-attempts 3  --captcha-timeout 30 --page-load-timeout 30 --reload-on-overrun
 ```
+#### Use global browser proxy
+```bash
+solver --proxy-server http://myproxy.com:3128 --proxy-username user --proxy-password pass
+```
+##### Load proxy parameters from environment variables (all caps)
+```bash
+solver --proxy-server MY_PROXY_SERVER --proxy-username MY_PROXY_USERNAME --proxy-password MY_PROXY_PASSWORD
+```
+
+TODO: Implement proxy rotation system
 
 ### Get token
 

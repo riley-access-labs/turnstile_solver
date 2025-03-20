@@ -4,6 +4,7 @@ import logging
 import argparse
 import random
 import time
+import dotenv
 from pathlib import Path
 from threading import Thread
 
@@ -28,7 +29,7 @@ _console = SolverConsole()
 __pname__ = "Turnstile Solver"
 
 # mdata = metadata.metadata(__pname__)
-__version__ = "1.21"  # mdata['Version']
+__version__ = "2.0"  # mdata['Version']
 __homepage__ = "https://github.com/odell0111/turnstile_solver"  # mdata['Home-page']
 __author__ = "OGM"  # mdata['Author']
 __summary__ = "Automatically solve Cloudflare Turnstile captcha"  # mdata['Summary']
@@ -100,9 +101,13 @@ def _parse_arguments():
   parser.add_argument("--headless", action="store_true", help=f"Open browser in headless mode. WARNING: This feature has never worked so far, captcha always fail! It's here only in case it works on future version of Playwright.")
   parser.add_argument("-bep", "--browser-executable-path", help=f"Chromium-based browser executable path. If not specified, Patchright (Playwright) will attempt to use its bundled version. Ensure you are using a Chromium-based browser installed with the command `patchright install chromium`. Other browsers may be detected by Cloudflare, which could result in the CAPTCHA not being solved.")
   parser.add_argument("-bp", "--browser-position", type=int, nargs='*', metavar="x|y", default=c.BROWSER_POSITION, help=f"Browser position x, y. Default: {c.BROWSER_POSITION}. If the browser window is positioned beyond the screen's resolution, it will be inaccessible, behaving similar to headless mode.")
+  parser.add_argument("-ps", "--proxy-server", help=f"Global browser proxy server in the format SCHEME://IP|ADDRESS:PORT. Ex: http://myproxy.com:3128")
+  parser.add_argument("-pun", "--proxy-username", help=f"Global browser proxy username: Use all caps to load from environment variables.")
+  parser.add_argument("-pp", "--proxy-password", help=f"Global browser proxy password: Use all caps to load from environment variables.")
+
   parser.add_argument("-nfl", "--no-file-logs", action="store_true", help=f"Do not log to file '$HOME.turnstile_solver/logs.log'.")
-  #
-  # # Solver
+
+  # Solver
   solver = parser.add_argument_group("Solver")
   solver.add_argument("-ma", "--max-attempts", type=positive_integer, metavar="N", default=c.MAX_ATTEMPTS_TO_SOLVE_CAPTCHA, help=f"Max attempts to perform to solve captcha. Default: {c.MAX_ATTEMPTS_TO_SOLVE_CAPTCHA}.")
   solver.add_argument("-cto", "--captcha-timeout", type=positive_float, metavar="N.", default=c.CAPTCHA_ATTEMPT_TIMEOUT, help=f"Max time to wait for captcha to solve before reloading page. Default: {c.CAPTCHA_ATTEMPT_TIMEOUT} seconds.")
@@ -211,7 +216,9 @@ async def run_server(
     attempt_timeout: int = c.CAPTCHA_ATTEMPT_TIMEOUT,
     headless: bool = False,
     solver_log_level: int | str = logging.INFO,
-
+    proxy_server: str | None = None,
+    proxy_username: str | None = None,
+    proxy_password: str | None = None,
 ):
   server = TurnstileSolverServer(
     host=host,
@@ -236,6 +243,9 @@ async def run_server(
     headless=headless,
     console=console,
     log_level=solver_log_level,
+    proxy_server=proxy_server,
+    proxy_username=proxy_username,
+    proxy_password=proxy_password,
   )
   server.solver = solver
   await solver.server.create_page_pool()
@@ -258,6 +268,8 @@ async def run_server(
 
 
 async def main():
+
+  dotenv.load_dotenv()
 
   from rich import traceback
   traceback.install(
@@ -315,6 +327,9 @@ async def main():
     attempt_timeout=args.captcha_timeout,
     headless=args.headless,
     solver_log_level=args.solver_log_level,
+    proxy_server=args.proxy_server,
+    proxy_username=args.proxy_username,
+    proxy_password=args.proxy_password,
   )
 
 

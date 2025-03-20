@@ -1,5 +1,7 @@
 import logging
 import asyncio
+import os
+
 import pytest
 import requests
 
@@ -37,6 +39,10 @@ def server(console: SolverConsole) -> TurnstileSolverServer:
 def solver(server: TurnstileSolverServer) -> TurnstileSolver:
   EXECUTABLE_PATH = Path.home() / "AppData/Local/ms-playwright/chromium-1155/chrome-win/chrome.exe"
 
+  proxyServer = os.environ.get('PROXY_SERVER')
+  proxyUsername = os.environ.get('PROXY_USERNAME')
+  proxyPassword = os.environ.get('PROXY_PASSWORD')
+
   s = TurnstileSolver(
     console=server.console,
     log_level=logging.DEBUG,
@@ -46,6 +52,9 @@ def solver(server: TurnstileSolverServer) -> TurnstileSolver:
     browser_position=None,
     browser_executable_path=EXECUTABLE_PATH,
     headless=False,
+    proxy_server=proxyServer,
+    proxy_username=proxyUsername,
+    proxy_password=proxyPassword,
   )
   server.solver = s
   return s

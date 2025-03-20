@@ -1,9 +1,12 @@
 import datetime
 import logging
+import os
+import re
 import time
 from pathlib import Path
 from typing import Callable, Awaitable
 from patchright.async_api import async_playwright, Page, BrowserContext, Browser, Playwright
+from turnstile_solver.utils import is_all_caps
 
 from . import constants as c
 from .enums import CaptchaApiMessageEvent
@@ -80,6 +83,9 @@ class TurnstileSolver:
                headless: bool = False,
                console: SolverConsole = SolverConsole(),
                log_level: int | str = logging.INFO,
+               proxy_server: str | None = None,
+               proxy_username: str | None = None,
+               proxy_password: str | None = None,
                ):
 
     logger.setLevel(log_level)
@@ -97,6 +103,13 @@ class TurnstileSolver:
     self._error: str | None = None
     self.max_attempts = max_attempts
     self.attempt_timeout = attempt_timeout
+
+    if bool(proxy_username) ^ bool(proxy_password):
+      raise ValueError("Proxy username and password must both be specified")
+
+    self.proxy_server = self._load_proxy_param(proxy_server)
+    self.proxy_username = self._load_proxy_param(proxy_username)
+    self.proxy_password = self._load_proxy_param(proxy_password)
 
   @property
   def _server_down(self) -> bool:
@@ -267,10 +280,38 @@ class TurnstileSolver:
 
   async def _get_browser_context(self) -> tuple[BrowserContext, Playwright]:
     playwright = await async_playwright().start()
+
+    if self.proxy_server:
+      logger.debug(f"Using proxy: '{self.proxy_server}'")
+      if not re.search(r':\d+$', self.proxy_server):
+        logger.warning("No proxy port specified")
+      proxy = {
+        'server': self.proxy_server,
+      }
+      if self.proxy_username:
+        logger.debug("Using proxy credentials")
+        # logger.debug(f"Proxy Username: {self.proxy_username}")
+        # logger.debug(f"Proxy Password: {self.proxy_password}")
+        proxy['username'] = self.proxy_username
+        proxy['password'] = self.proxy_password
+    else:
+      proxy = None
+
     browser: Browser | None = await playwright.chromium.launch(
       executable_path=self.browser_executable_path,
       # channel=channel,
       args=self.browser_args,
       headless=self.headless,
+      proxy=proxy,
     )
     return await browser.new_context(), playwright
+
+  @staticmethod
+  def _load_proxy_param(param) -> str | None:
+    if is_all_caps(param):
+      if p := os.environ.get(param):
+        logger.debug("Proxy parameter loaded from environment variables")
+        return p
+      else:
+        logger.warning("Proxy parameter intended to be loaded from environment variables was not found")
+    return param

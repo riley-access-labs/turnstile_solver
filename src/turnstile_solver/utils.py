@@ -55,3 +55,12 @@ def get_file_handler(
   formatter = logging.Formatter('%(asctime)s::%(levelname)s::%(name)s %(message)s, line %(lineno)d')
   handler.setFormatter(formatter)
   return handler
+
+
+def is_all_caps(word: str) -> bool:
+  if not word:
+    return False
+  filtered = [c.isupper() for c in word if c.isalpha()]
+  return filtered and all(filtered)
+
+

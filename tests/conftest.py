@@ -4,6 +4,7 @@ sys.path.append(str(Path(__file__).parent.parent / 'src'))
 
 import logging
 import pytest
+import dotenv
 
 from turnstile_solver.solver_console import SolverConsole
 from turnstile_solver.utils import init_logger, get_file_handler
@@ -29,6 +30,8 @@ def console() -> SolverConsole:
 @pytest.hookimpl
 def pytest_configure(config: pytest.Config):
   print()
+
+  dotenv.load_dotenv()
 
   if not PROJECT_HOME_DIR.exists():
     PROJECT_HOME_DIR.mkdir(parents=True)
