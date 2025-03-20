@@ -41,4 +41,3 @@ solver = "turnstile_solver:main_cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
