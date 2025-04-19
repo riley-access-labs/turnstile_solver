@@ -40,8 +40,11 @@ solver --proxy-server http://myproxy.com:3128 --proxy-username user --proxy-pass
 ```bash
 solver --proxy-server MY_PROXY_SERVER --proxy-username MY_PROXY_USERNAME --proxy-password MY_PROXY_PASSWORD
 ```
+##### Use a proxy from file per browser context
+```bash
+solver --proxies myproxies.txt
+```
 
-TODO: Implement proxy rotation system
 
 ### Get token
 
@@ -101,18 +104,25 @@ print("Token:", token)
 Use this project entirely at your own risk. I hold no responsibility for any negative outcomes, including but not limited to API blocking and IP bans
 
 ## Donate
+If you find my work useful and want to encourage further development, you can do so by donating
 
 [//]: # ([![Donate]&#40;https://app.oxapay.com/media/btn/light-btn.png&#41;]&#40;https://oxapay.com/donate/42319117&#41;)
 
-<a href="https://oxapay.com/donate/42319117" target="_blank"> <img src="https://app.oxapay.com/media/btn/light-btn.png" style="width: 200px"> </a>
+[//]: # (<a href="https://oxapay.com/donate/42319117" target="_blank"> <img src="https://app.oxapay.com/media/btn/light-btn.png" style="width: 200px"> </a>)
+
+### [OxaPay](https://oxapay.com/donate/42319117)
 
 ### TON
 ```
-UQAtE6g_gxHgDoD_rzR_lHqBN9zbR9367U1Mxu21F7c3CPI5
+UQCyCnWVYOmv97idVFZ4tIewToZacRhYVwfGNU658fN5w3Kl
 ```
 ### Bitcoin
 ```
-bc1qvnu237er6rxt8cazze6lx3dme66n60gjwgh2mx
+1E9kw3FuaahfeproboNL7uvyBdjP9wY6CR
+```
+### Bitcoin (BEP20)
+```
+0x88046e6d0f2bf8629cd7fbd754e4e275083fc993
 ```
 #### Speed Lightning Address username
 ```
