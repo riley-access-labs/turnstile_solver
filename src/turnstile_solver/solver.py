@@ -5,19 +5,23 @@ from pathlib import Path
 from typing import Callable, Awaitable
 from patchright.async_api import async_playwright, Page, BrowserContext, Browser, Playwright
 
-from . import constants as c
-from .enums import CaptchaApiMessageEvent
-from .proxy import Proxy
-from .solver_console import SolverConsole
-from .turnstile_result import TurnstileResult
-from .turnstile_solver_server import TurnstileSolverServer, CAPTCHA_EVENT_CALLBACK_ENDPOINT
+import turnstile_solver.constants as c
+from turnstile_solver.enums import CaptchaApiMessageEvent
+from turnstile_solver.proxy import Proxy
+from turnstile_solver.solver_console import SolverConsole
+from turnstile_solver.turnstile_result import TurnstileResult
+from turnstile_solver.turnstile_solver_server import TurnstileSolverServer, CAPTCHA_EVENT_CALLBACK_ENDPOINT
 
 logger = logging.getLogger(__name__)
 
 BROWSER_ARGS = {
-  "--disable-blink-features=AutomationControlled",  # avoid navigator.webdriver detection
+
   "--no-sandbox",
   "--disable-dev-shm-usage",
+  "--disable-setuid-sandbox",
+  "--disable-software-rasterizer",
+
+  "--disable-blink-features=AutomationControlled",  # avoid navigator.webdriver detection
   "--disable-background-networking",
   "--disable-background-timer-throttling",
   "--disable-backgrounding-occluded-windows",
@@ -88,6 +92,7 @@ class TurnstileSolver:
                page_load_timeout: float = c.PAGE_LOAD_TIMEOUT,
                browser_position: tuple[int, int] | None = c.BROWSER_POSITION,
                browser_executable_path: str | Path | None = None,
+               browser: str = c.BROWSER,
                reload_page_on_captcha_overrun_event: bool = False,
                max_attempts: int = c.MAX_ATTEMPTS_TO_SOLVE_CAPTCHA,
                attempt_timeout: int = c.CAPTCHA_ATTEMPT_TIMEOUT,
@@ -103,6 +108,7 @@ class TurnstileSolver:
     self.page_load_timeout = page_load_timeout
     self.reload_page_on_captcha_overrun_event = reload_page_on_captcha_overrun_event
     self.browser_executable_path = browser_executable_path
+    self.browser = browser
     self.headless = headless
 
     self.server: TurnstileSolverServer | None = server
@@ -293,9 +299,11 @@ class TurnstileSolver:
     if not playwright:
       playwright = await async_playwright().start()
 
+    # ?
+    # browser: Browser | None = await playwright.chromium.launch_persistent_context(no_viewport=True)
     browser: Browser | None = await playwright.chromium.launch(
       executable_path=self.browser_executable_path,
-      # channel=channel,
+      channel=self.browser,
       args=self.browser_args,
       headless=self.headless,
       proxy=proxy.dict() if proxy else None,
@@ -311,7 +319,10 @@ class TurnstileSolver:
     if not browser:
       browser, _ = await self.get_browser(playwright)
 
-    context = await browser.new_context(proxy=proxy.dict() if proxy else None)
+    context = await browser.new_context(
+      proxy=proxy.dict() if proxy else None,
+      no_viewport=True,
+    )
 
     # await context.route('**', lambda route: route.continue_())
     # await context.set_extra_http_headers({'HTTP2-Settings': 'MAX_CONCURRENT_STREAMS=100'})

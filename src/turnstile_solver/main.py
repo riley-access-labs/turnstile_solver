@@ -18,15 +18,15 @@ from rich.console import Group
 from rich.text import Text
 from multiprocessing import Process
 
-from . import constants as c
-from .proxy import Proxy
-from .proxy_provider import ProxyProvider
-from .custom_rich_help_formatter import CustomRichHelpFormatter
-from .solver_console import SolverConsole
-from .solver_console_highlighter import SolverConsoleHighlighter
-from .solver import TurnstileSolver
-from .utils import init_logger, simulate_intensive_task, get_file_handler, load_proxy_param
-from .turnstile_solver_server import TurnstileSolverServer
+import turnstile_solver.constants as c
+from turnstile_solver.proxy import Proxy
+from turnstile_solver.proxy_provider import ProxyProvider
+from turnstile_solver.custom_rich_help_formatter import CustomRichHelpFormatter
+from turnstile_solver.solver_console import SolverConsole
+from turnstile_solver.solver_console_highlighter import SolverConsoleHighlighter
+from turnstile_solver.solver import TurnstileSolver
+from turnstile_solver.utils import init_logger, simulate_intensive_task, get_file_handler, load_proxy_param
+from turnstile_solver.turnstile_solver_server import TurnstileSolverServer
 
 _console = SolverConsole()
 
@@ -34,7 +34,7 @@ __pname__ = "Turnstile Solver"
 
 # mdata = metadata.metadata(__pname__)
 # __version__ = mdata['Version']
-__version__ = "3.12"
+__version__ = "3.15b"
 __homepage__ = "https://github.com/odell0111/turnstile_solver"  # mdata['Home-page']
 __author__ = "OGM"  # mdata['Author']
 __summary__ = "Automatically solve Cloudflare Turnstile captcha"  # mdata['Summary']
@@ -101,6 +101,7 @@ def _parse_arguments():
     return value
 
   parser.add_argument("-bep", "--browser-executable-path", help=f"Chromium-based browser executable path. If not specified, Patchright (Playwright) will attempt to use its bundled version. Ensure you are using a Chromium-based browser installed with the command `patchright install chromium`. Other browsers may be detected by Cloudflare, which could result in the CAPTCHA not being solved.")
+  parser.add_argument("-b", "--browser", default="chrome", choices=c.BROWSERS, help=f"Either {c.BROWSER}. Use this argument to autodetect chrome executable path. Default: {c.BROWSER}.")
   parser.add_argument("-bp", "--browser-position", type=int, nargs='*', metavar="x|y", default=c.BROWSER_POSITION, help=f"Browser position x, y. Default: {c.BROWSER_POSITION}. If the browser window is positioned beyond the screen's resolution, it will be inaccessible, behaving similar to headless mode.")
   parser.add_argument("-mbi", "--multiple-browser-instances", action='store_true', help=f"Whether to use a new browser instance for each context or not. This is not recommended since it can occupy a lot more memory. Also the initialization process for each instance can take a little more time so when running for production it's recommended to make some requests to initialize some instances. See '--max-contexts'.")
   parser.add_argument("-mc", "--max-contexts", type=int, metavar="N", default=c.MAX_CONTEXTS, help=f"Max browser contexts. Default: {c.MAX_CONTEXTS}. Memory consumption increases proportionally with the number of browser contexts, specially if a new browser instance is created for each browser context.")
@@ -141,7 +142,6 @@ def _parse_arguments():
   misc = parser.add_argument_group("Miscellaneous")
   misc.add_argument("-h", "--help", action="help", default=argparse.SUPPRESS, help='Show this help message.')
   misc.add_argument("-v", "--version", action='version', version=f'{__pname__} v{__version__}', help="Show version and exit.")
-
 
   return parser.parse_args()
 
@@ -229,6 +229,7 @@ async def run_server(
     page_load_timeout: float = c.PAGE_LOAD_TIMEOUT,
     browser_position: tuple[int, int] = c.BROWSER_POSITION,
     browser_executable_path: str | Path | None = None,
+    browser: str = c.BROWSER,
     reload_page_on_captcha_overrun_event: bool = False,
     max_attempts: int = c.MAX_ATTEMPTS_TO_SOLVE_CAPTCHA,
     attempt_timeout: int = c.CAPTCHA_ATTEMPT_TIMEOUT,
@@ -254,6 +255,7 @@ async def run_server(
     page_load_timeout=page_load_timeout,
     browser_position=browser_position,
     browser_executable_path=browser_executable_path,
+    browser=browser,
     reload_page_on_captcha_overrun_event=reload_page_on_captcha_overrun_event,
     max_attempts=max_attempts,
     attempt_timeout=attempt_timeout,
@@ -366,6 +368,7 @@ async def main():
     page_load_timeout=args.page_load_timeout,
     browser_position=args.browser_position,
     browser_executable_path=args.browser_executable_path,
+    browser=args.browser,
     reload_page_on_captcha_overrun_event=args.reload_on_overrun,
     max_attempts=args.max_attempts,
     attempt_timeout=args.captcha_timeout,

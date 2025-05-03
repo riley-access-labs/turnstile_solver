@@ -36,7 +36,7 @@ HTML_TEMPLATE = '''
     </script>
 </head>
 <body>
-<div class="cf-turnstile" data-sitekey="{site_key}" style="display: inline-block"></div>
+<div class="cf-turnstile" data-sitekey="{site_key}" style="display: inline-block; background: white;"></div>
 </body>
 </html>
 '''
@@ -57,7 +57,8 @@ MAX_CONTEXTS = 40
 MAX_PAGES_PER_CONTEXT = 2
 PAGE_LOAD_TIMEOUT = 20
 BROWSER_POSITION = 2000, 2000
-
+BROWSER = "chrome"
+BROWSERS = ["chrome", "chromium", "msedge"]
 
 CONSOLE_THEME_STYLES = {
   # Overrides

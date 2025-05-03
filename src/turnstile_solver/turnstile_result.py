@@ -7,8 +7,8 @@ import asyncio
 
 from patchright.async_api import BrowserContext, Page
 
-from .enums import CaptchaApiMessageEvent
-from .utils import password
+from turnstile_solver.enums import CaptchaApiMessageEvent
+from turnstile_solver.utils import password
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +71,15 @@ class TurnstileResult:
 
   async def click_checkbox(self, page: Page | None = None):
     page = page or self.page
+    # Uncomment these lines if you think CAPTCHA solving process is failing because of the absence of a delay
+    # import random
+    # await asyncio.sleep(random.uniform(2, 3))
     await page.evaluate(_CLICK_CHECKBOX_SCRIPT)
-    await page.click(".cf-turnstile")
-    logger.debug("Attempt to click checkbox performed")
+    # TODO: For some sites this click approach seems to be detected by Cloudflare causing the CAPTCHA solving process to fail (Example site • https://chat.deepseek.com/ 0x4AAAAAAA1jQEh8YFk064tz)
+    # await page.click(".cf-turnstile")
+    # await page.locator("//div[@class='cf-turnstile']").click(timeout=1000)
+    try:
+      await page.locator('.cf-turnstile').click(timeout=1000)
+      logger.debug("Attempt to click checkbox performed")
+    except TimeoutError:
+      logger.error("Captcha widget click timed-out")

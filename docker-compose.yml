@@ -1,0 +1,18 @@
+services:
+  solver:
+    container_name: solver
+    hostname: solver
+    build:
+      context: ./docker/services/solver
+      dockerfile: ./solver.Dockerfile
+    restart: always
+    ports:
+      - 8088:8088 # turnstile_solver server
+      - 3389:3389 # RDP
+    networks:
+      - solver
+
+networks:
+  solver:
+    name: solver
+    driver: bridge
