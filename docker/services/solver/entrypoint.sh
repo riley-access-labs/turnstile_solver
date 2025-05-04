@@ -39,15 +39,31 @@ env_config() {
 repo_setup() {
 #    ( cd "${WORKSPACE}" && git clone -q "${REPO_URL}" && cd turnstile_solver || exit 2
 #    pip3 install -r requirements.txt --break-system-packages )
-    pip3 install "git+${REPO_URL}@main" --break-system-packages || exit 2
-    # Install patchright and dependencies
-    { pip3 install --no-cache-dir patchright && patchright install chrome; } || exit 2
+    pip3 install "git+${REPO_URL}@main" --no-cache-dir --break-system-packages || {
+      echo "Repo setup failed"
+      exit 2
+    }
+}
+
+install_patchright() {
+  # Install patchright (with PEP 668 workaround)
+  pip3 install --no-cache-dir --break-system-packages patchright || {
+      echo "Failed to install patchright"
+      exit 2
+  }
+
+  # Run patchright
+  patchright install chrome || {
+      echo "Failed to configure Chrome"
+      exit 3
+  }
 }
 
 # Execution flow
 user_setup || { echo "User config failed"; exit 1; }
 env_config || exit 1
-repo_setup || { echo "Repo setup failed"; exit 2; }
+repo_setup  && echo "repo set-up"
+install_patchright && echo "patchright installed"
 if service_init; then
   echo "Xorg running"
 else

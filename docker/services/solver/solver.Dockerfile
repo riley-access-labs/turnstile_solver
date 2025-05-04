@@ -1,13 +1,5 @@
 FROM ubuntu:latest
 
-# Environment variables
-ENV DEBIAN_FRONTEND=noninteractive \
-    LANG=en_US.UTF-8 \
-    LANGUAGE=en_US:en \
-    LC_ALL=en_US.UTF-8 \
-    TZ=America/New_York \
-    START_SERVER=false
-
 # Configure locale and timezone
 RUN apt-get update && \
     apt-get upgrade -y && \

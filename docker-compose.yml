@@ -11,6 +11,13 @@ services:
       - 3389:3389 # RDP
     networks:
       - solver
+    environment:
+      - DEBIAN_FRONTEND=noninteractive
+      - LANG=en_US.UTF-8
+      - LANGUAGE=en_US:en
+      - LC_ALL=en_US.UTF-8
+      - TZ=${TZ:-America/New_York}
+      - START_SERVER=${START_SERVER:-false}
 
 networks:
   solver:

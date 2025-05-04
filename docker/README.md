@@ -29,21 +29,19 @@ docker compose build --no-cache --pull
 
 #### 3. Start the Container
 
-**Command** (with environment variables):
-
-```bash
-docker compose up -d \
-  -e TZ="America/New_York" \
-  -e START_SERVER="true"
-```
-
-**Key Parameters**:
+**Set-up optional .env file**:
 
 - `TZ`: Set your [IANA timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)  
-  *(Example: Europe/London, Asia/Dubai)*
+  *(Example: Europe/London, Asia/Dubai)* Default: America/New_York
 - `START_SERVER`:
     - `true` = Auto-start with default config
-    - `false` = Manual start required
+    - `false` = Manual start required (default)
+
+**Command**:
+
+```bash
+docker compose up -d
+```
 
 ### 🔌 Remote Access Configuration
 
