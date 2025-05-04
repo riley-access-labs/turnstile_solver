@@ -40,6 +40,8 @@ repo_setup() {
 #    ( cd "${WORKSPACE}" && git clone -q "${REPO_URL}" && cd turnstile_solver || exit 2
 #    pip3 install -r requirements.txt --break-system-packages )
     pip3 install "git+${REPO_URL}@main" --break-system-packages || exit 2
+    # Install patchright and dependencies
+    { pip3 install --no-cache-dir patchright && patchright install chrome; } || exit 2
 }
 
 # Execution flow
@@ -55,6 +57,6 @@ fi
 
 if [ "$START_SERVER" = "true" ]; then
   echo "Starting server in headful mode..."
-  xvfb-run -a python3 solver
+  xvfb-run -a python3 solver --browser chrome
 #  xvfb-run -a python3 "${WORKSPACE}/turnstile_solver/main.py"
 fi
