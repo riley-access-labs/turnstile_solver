@@ -34,7 +34,7 @@ RUN apt-get update && \
     sudo \
     xfce4 \
     dbus-x11 \
-    xfce4-terminal \
+    xfce4-terminal
 
 # Clean up
 RUN apt remove -y light-locker xscreensaver && \
