@@ -34,7 +34,7 @@ __pname__ = "Turnstile Solver"
 
 # mdata = metadata.metadata(__pname__)
 # __version__ = mdata['Version']
-__version__ = "3.15b"
+__version__ = "3.16b"
 __homepage__ = "https://github.com/odell0111/turnstile_solver"  # mdata['Home-page']
 __author__ = "OGM"  # mdata['Author']
 __summary__ = "Automatically solve Cloudflare Turnstile captcha"  # mdata['Summary']

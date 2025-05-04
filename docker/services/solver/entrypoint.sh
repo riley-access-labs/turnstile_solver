@@ -4,19 +4,59 @@ declare -r TARGET_USER="root"
 #declare -r WORKSPACE="/${TARGET_USER}/Desktop"
 declare -r REPO_URL="https://github.com/odell0111/turnstile_solver.git"
 
-clean_pids() {
+start_vnc_server() {
+  # Kill any previous previous session
+  vncserver -kill :1 > /dev/null 2>&1
+
+  # Build the base command arguments
+  CMD="vncserver :1 \
+    -httpport $VNC_SERVER_PORT \
+    -geometry $GEOMETRY \
+    -dpi $DPI \
+    -depth $DEPTH"
+
+  # Generate input sequence (password x2 + confirm)
+  INPUT_FEED=$(printf "%s\r\n%s\r\n\r\y\r\n" "$PASSWORD" "$PASSWORD")
+
+  # Execute and capture output
+eval "$CMD" <<EOF 2>&1
+$INPUT_FEED
+EOF
+}
+
+start_xrdp() {
+    # Clean PIDs
     find /var/run -name '*xrdp*.pid' -delete
+    # Update port
+    sed -E -i "s/port=[0-9]+/port=${XRDP_PORT}/g" /etc/xrdp/xrdp.ini
+    xrdp-sesman & xrdp -n &
 }
 
 service_init() {
-    clean_pids
-    xrdp-sesman & xrdp -n &
+
+    if [ "$REMOTE_DESKTOP_PROTOCOL" = "RDP" ]; then
+      (start_xrdp && echo "Xrdp running on port: ${XRDP_PORT}") || {
+        echo "Xrdp failed to start"
+        exit 2
+      }
+    elif [ "$REMOTE_DESKTOP_PROTOCOL" = "VNC" ]; then
+      (start_vnc_server && echo "TightVNC server running on port: ${VNC_SERVER_PORT}") || {
+        echo "TightVNC server setup failed"
+        exit 3
+      }
+    fi
+
+    # Wait up to 20s fot Xorg to start
     local timeout=20
 
     while ((timeout-- > 0)); do
-        pgrep -x Xorg && return 0
+        pgrep -x Xorg && {
+          echo "Xorg started"
+          return 0
+        }
         sleep 1
     done
+    echo "Xorg not started after 20s"
     return 1
 }
 
@@ -49,30 +89,25 @@ install_patchright() {
   # Install patchright (with PEP 668 workaround)
   pip3 install --no-cache-dir --break-system-packages patchright || {
       echo "Failed to install patchright"
-      exit 2
+      exit 3
   }
 
   # Run patchright
-  patchright install chrome || {
-      echo "Failed to configure Chrome"
-      exit 3
+  patchright install $SOLVER_BROWSER || {
+      echo "Failed to install Patchright browser: $SOLVER_BROWSER"
+      exit 4
   }
 }
 
 # Execution flow
 user_setup || { echo "User config failed"; exit 1; }
-env_config || exit 1
+env_config || exit 5
 repo_setup  && echo "repo set-up"
 install_patchright && echo "patchright installed"
-if service_init; then
-  echo "Xorg running"
-else
-  echo "X server failed"
-  exit 3
-fi
+service_init || exit 6
 
 if [ "$START_SERVER" = "true" ]; then
   echo "Starting server in headful mode..."
-  xvfb-run -a python3 solver --browser chrome
+  xvfb-run -a python3 solver --browser ${SOLVER_BROWSER} --port ${SOLVER_SERVER_PORT}
 #  xvfb-run -a python3 "${WORKSPACE}/turnstile_solver/main.py"
 fi

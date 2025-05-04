@@ -20,6 +20,7 @@ RUN apt-get update && \
     python3-pip \
     xorgxrdp \
     xrdp \
+    tightvncserver \
     xvfb \
     wget \
     screen \
@@ -42,8 +43,8 @@ COPY ./entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Healthcheck (adjust as needed)
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-    CMD netstat -an | grep 3389 >/dev/null || exit 1
+#HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+#    CMD netstat -an | grep $XRDP_PORT >/dev/null || exit 1
 
 # Set entrypoint
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
