@@ -5,6 +5,11 @@ services:
     build:
       context: ./docker/services/solver
       dockerfile: ./solver.Dockerfile
+      platforms:
+        - linux/amd64
+        - linux/arm64
+      args:
+        BASE_IMAGE: ${BASE_IMAGE:-ubuntu:latest}
     restart: always
     ports:
       - ${SOLVER_SERVER_PORT:-8088}:${SOLVER_SERVER_PORT:-8088}

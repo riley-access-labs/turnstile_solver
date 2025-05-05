@@ -1,4 +1,11 @@
-FROM ubuntu:latest
+ARG BASE_IMAGE=ubuntu:latest
+FROM --platform=$BUILDPLATFORM ${BASE_IMAGE} AS builder
+
+# Multi-stage build setup
+FROM --platform=$TARGETPLATFORM ${BASE_IMAGE}
+
+# Copy architecture-specific binaries
+COPY --from=builder /build-output /app
 
 # Configure locale and timezone
 RUN apt-get update && \
@@ -21,11 +28,15 @@ RUN apt-get update && \
     xorgxrdp \
     xrdp \
     tightvncserver \
+    xfonts-75dpi  \
+    xfonts-100dpi  \
+    xfonts-base \
     xvfb \
     wget \
     screen \
     sudo \
     xfce4 \
+    xfce4-goodies \
     dbus-x11 \
     xfce4-terminal
 

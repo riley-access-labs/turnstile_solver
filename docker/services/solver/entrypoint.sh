@@ -95,10 +95,10 @@ install_patchright() {
   }
 
   # Install browser
-  patchright install --force "$SOLVER_BROWSER" || {
-      echo "Failed to install Patchright browser: $SOLVER_BROWSER"
-      return 4
-  }
+#  patchright install --force "$SOLVER_BROWSER" || {
+#      echo "Failed to install Patchright browser: $SOLVER_BROWSER"
+#      return 4
+#  }
   echo "Patchright installed"
 }
 

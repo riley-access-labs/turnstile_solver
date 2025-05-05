@@ -20,11 +20,32 @@ git clone https://github.com/odell0111/turnstile_solver.git
 cd turnstile_solver
 ```
 
-#### 2. Build Image
+#### 2. Set-Up Custom Builder - MultiArch Build
 
 ```bash
-# Clean build with fresh dependencies
-docker compose build --no-cache --pull
+# 1. Initialize Buildx
+docker buildx create --use --name multiarch-builder
+docker buildx inspect --bootstrap
+
+# 2. Build and push multi-arch images
+docker buildx bake --set "*.platform=linux/amd64,linux/arm64" --set "*.tags=turnstile_solver/solver:latest" --push
+
+# AMD64 Build
+#docker buildx build --platform linux/amd64 -t solver:amd64-latest .
+# ARM64 Build
+ docker buildx build --platform linux/arm64 -t solver:arm64-latest .
+
+# Multi-Arch Manifest
+docker buildx imagetools create -t solver:multiarch-latest solver:amd64-latest solver:arm64-latest
+```
+
+#### 3. Platform-Specific Deployment
+```bash
+# For AMD64 hosts
+#docker compose --profile amd64 up
+
+# For ARM64 hosts
+ docker compose --profile arm64 up
 ```
 
 #### 3. Start the Container
@@ -55,10 +76,13 @@ docker compose build --no-cache --pull
 
 **Command**:
 Create and start container
+
 ```bash
 docker compose up
 ```
+
 Create and start container in background (Not recommended)
+
 ```bash
 docker compose up -d
 ```
