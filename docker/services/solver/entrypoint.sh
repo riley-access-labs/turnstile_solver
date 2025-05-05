@@ -17,7 +17,7 @@ start_vnc_server() {
   echo "Starting VNC server with command: \"$CMD\""
 
   # Generate input sequence (password x2 + confirm)
-  INPUT_FEED=$(printf "%s\r\n%s\r\n\ry\r\n" "$PASSWORD" "$PASSWORD")
+  INPUT_FEED=$(printf "%s\r\n%s\r\n\ry\r\n" "$VNC_PASSWORD" "$VNC_PASSWORD")
 
   # Execute and capture output
 eval "$CMD" <<EOF 2>&1
