@@ -6,17 +6,18 @@ declare -r REPO_URL="https://github.com/odell0111/turnstile_solver.git"
 
 start_vnc_server() {
   # Kill any previous previous session
-  vncserver -kill :1 > /dev/null 2>&1
+  vncserver -kill "$VNC_DISPLAY" > /dev/null 2>&1
 
   # Build the base command arguments
-  CMD="vncserver :1 \
-    -httpport $VNC_SERVER_PORT \
-    -geometry $GEOMETRY \
-    -dpi $DPI \
-    -depth $DEPTH"
+  CMD="vncserver $VNC_DISPLAY \
+    -httpport $VNC_PORT \
+    -geometry $VNC_GEOMETRY \
+    -dpi $VNC_DPI \
+    -depth $VNC_DEPTH"
+  echo "Starting VNC server with command: \"$CMD\""
 
   # Generate input sequence (password x2 + confirm)
-  INPUT_FEED=$(printf "%s\r\n%s\r\n\r\y\r\n" "$PASSWORD" "$PASSWORD")
+  INPUT_FEED=$(printf "%s\r\n%s\r\n\ry\r\n" "$PASSWORD" "$PASSWORD")
 
   # Execute and capture output
 eval "$CMD" <<EOF 2>&1
@@ -37,12 +38,12 @@ service_init() {
     if [ "$REMOTE_DESKTOP_PROTOCOL" = "RDP" ]; then
       (start_xrdp && echo "Xrdp running on port: ${XRDP_PORT}") || {
         echo "Xrdp failed to start"
-        exit 2
+        return 2
       }
     elif [ "$REMOTE_DESKTOP_PROTOCOL" = "VNC" ]; then
       (start_vnc_server && echo "TightVNC server running on port: ${VNC_SERVER_PORT}") || {
         echo "TightVNC server setup failed"
-        exit 3
+        return 3
       }
     fi
 
@@ -81,33 +82,35 @@ repo_setup() {
 #    pip3 install -r requirements.txt --break-system-packages )
     pip3 install "git+${REPO_URL}@main" --no-cache-dir --break-system-packages || {
       echo "Repo setup failed"
-      exit 2
+      return 2
     }
+    echo "repo set-up done"
 }
 
 install_patchright() {
   # Install patchright (with PEP 668 workaround)
   pip3 install --no-cache-dir --break-system-packages patchright || {
       echo "Failed to install patchright"
-      exit 3
+      return 3
   }
 
-  # Run patchright
-  patchright install $SOLVER_BROWSER || {
+  # Install browser
+  patchright install --force "$SOLVER_BROWSER" || {
       echo "Failed to install Patchright browser: $SOLVER_BROWSER"
-      exit 4
+      return 4
   }
+  echo "Patchright installed"
 }
 
 # Execution flow
 user_setup || { echo "User config failed"; exit 1; }
-env_config || exit 5
-repo_setup  && echo "repo set-up"
-install_patchright && echo "patchright installed"
+env_config || exit 2
+repo_setup || exit 3
+install_patchright || exit 4
 service_init || exit 6
 
 if [ "$START_SERVER" = "true" ]; then
   echo "Starting server in headful mode..."
-  xvfb-run -a python3 solver --browser ${SOLVER_BROWSER} --port ${SOLVER_SERVER_PORT}
+  xvfb-run -a python3 solver --browser "${SOLVER_BROWSER}" --port "${SOLVER_SERVER_PORT}"
 #  xvfb-run -a python3 "${WORKSPACE}/turnstile_solver/main.py"
 fi

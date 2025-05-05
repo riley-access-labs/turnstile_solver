@@ -31,15 +31,15 @@ docker compose build --no-cache --pull
 
 ##### Set-up optional .env file at `docker-compose.yml` level:
 
-- `TZ`: Set your [IANA timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones). Example: Europe/London, Asia/Dubai). Default: **_America/New_York_**
+- `TZ` - Set your [IANA timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones). Example: Europe/London, Asia/Dubai). Default: **_America/New_York_**
 - `START_SERVER`:
     - **false** - Manual start required (default)
     - **true** - Auto-start with default config
 - `SOLVER_SERVER_PORT` - Turnstile Solver server port. Default: **_8088_**
-- `SOLVER_BROWSER` - Patchright browser to install and use on auto-start build.
+- `SOLVER_BROWSER` - Patchright browser to install and use on auto-start build:
     - **chrome** (default and recommended)
     - **chromium**
-    - **msedge**
+- `USER` - Needed by VNC Server. Default: **_Perico_**
 - `REMOTE_DESKTOP_PROTOCOL`:
     - **RDP** - Xrdp
     - **VNC** - VNC/TightVNC
@@ -54,7 +54,11 @@ docker compose build --no-cache --pull
     - `XRDP_PORT` - Xrdp port. Default: **_3389_**
 
 **Command**:
-
+Create and start container
+```bash
+docker compose up
+```
+Create and start container in background (Not recommended)
 ```bash
 docker compose up -d
 ```

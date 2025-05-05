@@ -34,10 +34,6 @@ RUN apt remove -y light-locker xscreensaver && \
     apt autoremove -y && \
     rm -rf /var/cache/apt /var/lib/apt/lists
 
-## Install Python dependencies
-#RUN pip install --no-cache-dir patchright && \
-#    patchright install chrome
-
 # Copy entrypoint script
 COPY ./entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/entrypoint.sh
