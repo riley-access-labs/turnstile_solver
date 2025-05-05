@@ -27,7 +27,7 @@ services:
       - USER=${USER:-Perico} # Needed by VNC Server
       # VNC Server
       - VNC_PORT=${VNC_PORT:-5901}
-      - VNC_PASSWORD=${VNC_PWD:-12345678}
+      - VNC_PASSWORD=${VNC_PASSWORD:-123456789}
       - VNC_GEOMETRY=${VNC_GEOMETRY:-1280x720}
       - VNC_DPI=${VNC_DPI:-70}
       - VNC_DEPTH=${VNC_DEPTH:-24}
