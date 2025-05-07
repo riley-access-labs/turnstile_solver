@@ -31,24 +31,13 @@ docker buildx inspect --bootstrap
 docker buildx bake --set "*.platform=linux/amd64,linux/arm64" --set "*.tags=turnstile_solver/solver:latest" --push
 
 # AMD64 Build
-#docker buildx build --platform linux/amd64 -t solver:amd64-latest .
+docker buildx build --platform linux/amd64 -t solver:amd64-latest .
 # ARM64 Build
- docker buildx build --platform linux/arm64 -t solver:arm64-latest .
+# docker buildx build --platform linux/arm64 -t solver:arm64-latest .
 
 # Multi-Arch Manifest
 docker buildx imagetools create -t solver:multiarch-latest solver:amd64-latest solver:arm64-latest
 ```
-
-#### 3. Platform-Specific Deployment
-```bash
-# For AMD64 hosts
-#docker compose --profile amd64 up
-
-# For ARM64 hosts
- docker compose --profile arm64 up
-```
-
-#### 3. Start the Container
 
 ##### Set-up optional .env file at `docker-compose.yml` level:
 
@@ -74,17 +63,14 @@ docker buildx imagetools create -t solver:multiarch-latest solver:amd64-latest s
 - Xrdp:
     - `XRDP_PORT` - Xrdp port. Default: **_3389_**
 
-**Command**:
-Create and start container
+#### 3. Platform-Specific Deployment
 
 ```bash
-docker compose up
-```
+# For AMD64 hosts
+docker compose --profile amd64 up
 
-Create and start container in background (Not recommended)
-
-```bash
-docker compose up -d
+# For ARM64 hosts
+#docker compose --profile arm64 up
 ```
 
 ### 🔌 Remote Access Configuration
