@@ -21,6 +21,7 @@ PD: This repository was initially created for personal use. I've adjusted it for
     - [Python](#python)
 - [Docker](./docker/README.md)
 - [Disclaimer](#disclaimer)
+- [Sponsor](#sponsor)
 - [Donate](#donate)
 
 ---
@@ -148,6 +149,35 @@ goto [./docker/README.md](./docker/README.md)
 ## Disclaimer
 
 Use this project entirely at your own risk. I hold no responsibility for any negative outcomes, including but not limited to API blocking and IP bans
+
+---
+
+## Sponsor
+**Need to elevate your project?**
+Try **[CapSolver](https://www.capsolver.com/)**, an industry-leading RPA (Robotic Process Automation) service. From Cloudflare's anti-bot systems to hCaptcha, reCAPTCHA, and more, CapSolver delivers unmatched accuracy and speed to tackle even the toughest challenges. Trusted by developers worldwide for seamless automation.
+
+![CapSolver](images/CapSolver_banner.jpg)
+
+<center>
+  <a href="https://www.g2.com/products/capsolver/reviews" target="_blank">
+    <img src="https://img.shields.io/badge/%E2%80%8B%E2%80%8B★★★★★-grey?style=plastic&logo=g2&color=97C412&labelColor=grey" alt="G2 Rating"/>
+  </a>
+  <a href="https://www.trustpilot.com/review/capsolver.com" target="_blank">
+    <img src="https://img.shields.io/badge/%E2%80%8B%E2%80%8B★★★★★-grey?style=plastic&logo=trustpilot&color=97C412&labelColor=grey" alt="G2 Rating"/>
+  </a>
+  <a href="https://www.producthunt.com/products/capsolver-captcha-solver-service" target="_blank">
+    <img src="https://img.shields.io/badge/%E2%80%8B%E2%80%8B★★★★★-grey?style=plastic&logo=producthunt&color=97C412&labelColor=grey" alt="G2 Rating"/>
+  </a>
+  <a href="https://www.saashub.com/capsolver" target="_blank">
+    <img src="https://img.shields.io/badge/%E2%80%8B%E2%80%8B★★★★★-grey?style=plastic&color=97C412&labelColor=grey&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbDpzcGFjZT0icHJlc2VydmUiIHdpZHRoPSI3MC4yOSIgaGVpZ2h0PSI3OC40MDQiIHZpZXdCb3g9IjAgMCAxOC41OTggMjAuNzQ1Ij48cGF0aCBkPSJNNDguMjUyIDEwNC45ODRjNy45Mi0zLjkgOS4yMzctOC41MTYgOC44ODgtMTcuNjYybC04LjcwNy0yLjAzOXMtNy41MjUgMS42MDYtOC43NjggMS44OWMtLjQ4MiA4LjcwNS43ODMgMTQuMzkzIDguNTg3IDE3LjgxMXoiIHN0eWxlPSJmaWxsOiMzNTQ3OGM7ZmlsbC1vcGFjaXR5OjE7c3Ryb2tlOiNiM2RjZmY7c3Ryb2tlLXdpZHRoOi45ODA4OTtzdHJva2UtZGFzaGFycmF5Om5vbmU7c3Ryb2tlLW9wYWNpdHk6MSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTM5LjA4NCAtODQuNzgpIi8+PHBhdGggZD0iTTQ0LjQyNiA5OS41NSA0NiA5NS4zNzZsMi4yIDEuNTcyek00Ni44ODkgOTIuNjkzbDEuNDk5LTQuMjEgMS41OTUgNC4yMXoiIHN0eWxlPSJmaWxsOiNiM2RjZmY7ZmlsbC1vcGFjaXR5OjE7c3Ryb2tlOiNiM2RjZmY7c3Ryb2tlLXdpZHRoOjA7c3Ryb2tlLWRhc2hhcnJheTpub25lO3N0cm9rZS1vcGFjaXR5OjEiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0zOS4wODQgLTg0Ljc4KSIvPjxwYXRoIGQ9Ik00Mi44MDYgOTIuNjYxaDExLjIyOGwtMy40MTMgMi41ODQgMS42NTggNC4yNzR6IiBzdHlsZT0iZmlsbDojZmZmO2ZpbGwtb3BhY2l0eToxO3N0cm9rZTojYjNkY2ZmO3N0cm9rZS13aWR0aDowO3N0cm9rZS1kYXNoYXJyYXk6bm9uZTtzdHJva2Utb3BhY2l0eToxIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMzkuMDg0IC04NC43OCkiLz48L3N2Zz4=" alt="SaaSHub Rating"/>
+  </a>
+  <a href="https://chromewebstore.google.com/detail/captcha-solver-auto-captc/pgojnojmmhpofjgdmaebadhbocahppod" target="_blank">
+    <img src="https://img.shields.io/chrome-web-store/stars/pgojnojmmhpofjgdmaebadhbocahppod?style=plastic&logo=chromewebstore&label=%E2%80%8B" alt="Chrome Extension Rating"/>
+  </a>
+  <a href="https://addons.mozilla.org/en-US/firefox/addon/capsolver-captcha-solver/?utm_source=addons.mozilla.org&utm_medium=referral&utm_content=search" target="_blank">
+    <img src="https://img.shields.io/amo/stars/capsolver-captcha-solver?style=plastic&logo=firefoxbrowser&label=%E2%80%8B" alt="Firefox Extension Rating"/>
+  </a>
+</center>
 
 ---
 
