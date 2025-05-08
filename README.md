@@ -158,7 +158,7 @@ Try **[CapSolver](https://www.capsolver.com/)**, an industry-leading RPA (Roboti
 
 ![CapSolver](images/CapSolver_banner.jpg)
 
-<center>
+<div align="center">
   <a href="https://www.g2.com/products/capsolver/reviews" target="_blank">
     <img src="https://img.shields.io/badge/%E2%80%8B%E2%80%8B★★★★★-grey?style=plastic&logo=g2&color=97C412&labelColor=grey" alt="G2 Rating"/>
   </a>
@@ -177,7 +177,7 @@ Try **[CapSolver](https://www.capsolver.com/)**, an industry-leading RPA (Roboti
   <a href="https://addons.mozilla.org/en-US/firefox/addon/capsolver-captcha-solver/?utm_source=addons.mozilla.org&utm_medium=referral&utm_content=search" target="_blank">
     <img src="https://img.shields.io/amo/stars/capsolver-captcha-solver?style=plastic&logo=firefoxbrowser&label=%E2%80%8B" alt="Firefox Extension Rating"/>
   </a>
-</center>
+</div>
 
 ---
 
