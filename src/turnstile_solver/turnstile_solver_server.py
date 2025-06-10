@@ -206,7 +206,7 @@ class TurnstileSolverServer:
         if proxy:
           context_options["proxy"] = proxy.dict()
         if user_agent:
-          context_options["user_agent"] = user_agent
+          context_options["userAgent"] = user_agent
 
         context = await browser.new_context(**context_options)
         page = await context.new_page()

@@ -216,37 +216,9 @@ headers = {
   'Content-Type': 'application/json'
 }
 
-# Basic request with proxy (string format)
 json_data = {
   "site_url": "https://spotifydown.com",
-  "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
-  "proxy": "proxy.example.com:8080"
-}
-
-# Or with proxy authentication (object format)
-json_data = {
-  "site_url": "https://spotifydown.com",
-  "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
-  "proxy": {
-    "server": "http://proxy.example.com:8080",
-    "username": "proxy_user",
-    "password": "proxy_pass"
-  }
-}
-
-# With custom user agent
-json_data = {
-  "site_url": "https://spotifydown.com",
-  "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
-  "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15"
-}
-
-# With both proxy and user agent
-json_data = {
-  "site_url": "https://spotifydown.com",
-  "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
-  "proxy": "http://proxy.example.com:8080",
-  "user_agent": "Mozilla/5.0 (Android 11; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0"
+  "site_key": "0x4AAAAAAAByvC31sFG0MSlp"
 }
 
 response = requests.get(
@@ -270,9 +242,9 @@ print("Token:", token)
 
 ```
 
-#### With Proxy and User Agent
+#### With Proxy, User Agent, and CData
 
-You can now include proxy and user_agent parameters in your requests:
+You can now include proxy, user_agent, and cdata parameters in your requests:
 
 ```python
 import requests
@@ -287,22 +259,18 @@ headers = {
   'Content-Type': 'application/json'
 }
 
-# Basic request with proxy (string format)
+# With proxy (no authentication)
 json_data = {
   "site_url": "https://spotifydown.com",
   "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
-  "proxy": "http://proxy.example.com:8080"
+  "proxy": "proxy.example.com:8080"
 }
 
-# Or with proxy authentication (object format)
+# With proxy authentication
 json_data = {
   "site_url": "https://spotifydown.com",
   "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
-  "proxy": {
-    "server": "http://proxy.example.com:8080",
-    "username": "proxy_user",
-    "password": "proxy_pass"
-  }
+  "proxy": "proxy.example.com:8080:username:password"
 }
 
 # With custom user agent
@@ -312,12 +280,20 @@ json_data = {
   "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15"
 }
 
-# With both proxy and user agent
+# With cdata
 json_data = {
   "site_url": "https://spotifydown.com",
   "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
-  "proxy": "http://proxy.example.com:8080",
-  "user_agent": "Mozilla/5.0 (Android 11; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0"
+  "cdata": "custom-data-value"
+}
+
+# With proxy, user agent, and cdata
+json_data = {
+  "site_url": "https://spotifydown.com",
+  "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
+  "proxy": "proxy.example.com:8080:username:password",
+  "user_agent": "Mozilla/5.0 (Android 11; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0",
+  "cdata": "custom-data-value"
 }
 
 response = requests.get(
