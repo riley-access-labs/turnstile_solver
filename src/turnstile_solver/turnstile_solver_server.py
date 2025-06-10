@@ -171,13 +171,12 @@ class TurnstileSolverServer:
       if not (site_key := data.get('site_key')):
         return self._bad("site_key required")
 
-      # Extract optional proxy and user_agent from request
+      # Extract optional proxy from request
       proxy_config = data.get('proxy')
-      user_agent = data.get('user_agent')
       cdata = data.get('cdata')
 
-      # If proxy or user_agent is specified, create a temporary browser context
-      if proxy_config or user_agent:
+      # If proxy is specified, create a temporary browser context
+      if proxy_config:
         # Parse proxy configuration if provided
         proxy = None
         if proxy_config:
@@ -197,17 +196,13 @@ class TurnstileSolverServer:
           else:
             return self._bad("Invalid proxy format. Expected string in format HOST:PORT or HOST:PORT:USERNAME:PASSWORD")
 
-        # Create temporary browser context with specific proxy/user_agent
-        # We need a separate browser instance for custom proxy/user_agent requests
+        # Create temporary browser context with specific proxy
+        # We need a separate browser instance for custom proxy requests
         # to avoid conflicts with the pooled browser
         try:
           # Create a fresh browser and context directly
           browser, playwright = await self.solver.get_browser(proxy=proxy)
           context = await self.solver.get_browser_context(browser=browser, proxy=proxy)
-          
-          # Set user agent if provided (must be done after context creation)
-          if user_agent:
-            await context.set_extra_http_headers({"User-Agent": user_agent})
           
           page = await self.solver._setup_page(context=context, site_url=site_url, site_key=site_key, cdata=cdata)
         except Exception as e:
@@ -243,7 +238,7 @@ class TurnstileSolverServer:
             pass
 
       else:
-        # Use existing browser context pool for requests without proxy/user_agent
+        # Use existing browser context pool for requests without proxy
         async with self._lock:
           pagePool = await self.browser_context_pool.get()
           page = await pagePool.get()
