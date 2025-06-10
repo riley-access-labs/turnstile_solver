@@ -203,13 +203,13 @@ class TurnstileSolverServer:
         try:
           # Create a fresh browser and context directly
           browser, playwright = await self.solver.get_browser(proxy=proxy)
-          context = await browser.new_context(no_viewport=True)
+          context = await self.solver.get_browser_context(browser=browser, proxy=proxy)
           
           # Set user agent if provided (must be done after context creation)
           if user_agent:
             await context.set_extra_http_headers({"User-Agent": user_agent})
           
-          page = await context.new_page()
+          page = await self.solver._setup_page(context=context, site_url=site_url, site_key=site_key, cdata=cdata)
         except Exception as e:
           logger.error(f"Failed to create browser context: {e}")
           return self._error(f"Failed to create browser context: {str(e)}")
