@@ -142,6 +142,7 @@ class TurnstileSolver:
                   page: Page | bool = False,
                   about_blank_on_finish: bool = False,
                   cdata: str | None = None,
+                  proxy: Proxy | None = None,
                   ) -> TurnstileResult | None:
     """
     If page is a Page instance, this instance will be reused, else a new BrowserContext instance will be created and destroyed upon finish if browser_context is False, else the created instance will be returned along with the Browser instance
@@ -168,7 +169,10 @@ class TurnstileSolver:
     onFinishCallbacks: list[Callable[[], Awaitable[None]]] = []
 
     if isinstance(page, bool):
-      pageOrContext, playwright = await self.get_browser_context()
+      if proxy:
+        pageOrContext, playwright = await self.get_browser_context(proxy=proxy)
+      else:
+        pageOrContext, playwright = await self.get_browser_context()
       if page is True:
         result.browser_context = pageOrContext
       else:

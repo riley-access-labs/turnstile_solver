@@ -195,19 +195,11 @@ class TurnstileSolverServer:
               return self._bad("Invalid proxy format. Use HOST:PORT or HOST:PORT:USERNAME:PASSWORD")
           else:
             return self._bad("Invalid proxy format. Expected string in format HOST:PORT or HOST:PORT:USERNAME:PASSWORD")
-
-        # Create temporary browser context with specific proxy
-        # We need a separate browser instance for custom proxy requests
-        # to avoid conflicts with the pooled browser
-        try:
-          # Create a fresh browser and context directly
-          browser, playwright = await self.solver.get_browser(proxy=proxy)
-          context = await self.solver.get_browser_context(browser=browser, proxy=proxy)
-          
-          page = await self.solver._setup_page(page_or_context=context, site_url=site_url, site_key=site_key, cdata=cdata)
-        except Exception as e:
-          logger.error(f"Failed to create browser context: {e}")
-          return self._error(f"Failed to create browser context: {str(e)}")
+        
+        # Use existing browser context pool for requests without proxy
+        async with self._lock:
+          pagePool = await self.browser_context_pool.get()
+          page = await pagePool.get()
 
         try:
           if not (result := await self.solver.solve(
@@ -216,26 +208,12 @@ class TurnstileSolverServer:
               page=page,
               about_blank_on_finish=True,
               cdata=cdata,
+              proxy=proxy,
           )):
             return self._error(self.solver.error)
         finally:
-          try:
-            await page.close()
-          except:
-            pass
-          try:
-            await context.close()
-          except:
-            pass
-          try:
-            # Also close the browser we created
-            await browser.close()
-          except:
-            pass
-          try:
-            await playwright.stop()
-          except:
-            pass
+          await self.browser_context_pool.put_back(pagePool)
+          await pagePool.put_back(page)
 
       else:
         # Use existing browser context pool for requests without proxy
