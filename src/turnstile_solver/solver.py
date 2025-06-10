@@ -65,7 +65,7 @@ BROWSER_ARGS = {
   '--no-service-autorun',
   '--password-store=basic',
   '--log-level=3',
-  '--proxy-bypass-list=<-loopback>;localhost;127.0.0.1;*.local;pr.oxylabs.io:7777',
+  '--proxy-bypass-list=<-loopback>;localhost;127.0.0.1;*.local',
 
   # Not needed, here just for reference
   # Network/Connection Tuning
@@ -141,7 +141,6 @@ class TurnstileSolver:
                   timeout: float | None = None,
                   page: Page | bool = False,
                   about_blank_on_finish: bool = False,
-                  cdata: str | None = None,
                   ) -> TurnstileResult | None:
     """
     If page is a Page instance, this instance will be reused, else a new BrowserContext instance will be created and destroyed upon finish if browser_context is False, else the created instance will be returned along with the Browser instance
@@ -195,7 +194,6 @@ class TurnstileSolver:
             site_url=site_url,
             site_key=site_key,
             id=result.id,
-            cdata=cdata,
         )):
           return
 
@@ -263,7 +261,6 @@ class TurnstileSolver:
       site_url: str,
       site_key: str,
       id: str,
-      cdata: str | None = None,
   ) -> Page | None:
 
     if self._server_down:
@@ -271,14 +268,10 @@ class TurnstileSolver:
 
     page = await page_or_context.new_page() if isinstance(page_or_context, BrowserContext) else page_or_context
 
-    # Conditionally include data-cdata attribute only if cdata has a value
-    cdata_attribute = f' data-cdata="{cdata}"' if cdata else ""
-
     pageContent = c.HTML_TEMPLATE.format(
       local_server_port=self.server.port,
       local_callback_endpoint=CAPTCHA_EVENT_CALLBACK_ENDPOINT.lstrip('/'),
       site_key=site_key,
-      cdata_attribute=cdata_attribute,
       id=id,
       secret=self.server.secret,
     )
