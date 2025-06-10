@@ -83,6 +83,52 @@ solver --proxy-server MY_PROXY_SERVER --proxy-username MY_PROXY_USERNAME --proxy
 solver --proxies myproxies.txt
 ```
 
+### API Parameters
+
+The `/solve` endpoint accepts the following parameters in the request body:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `site_url` | string | Yes | The URL of the site containing the Turnstile CAPTCHA |
+| `site_key` | string | Yes | The Turnstile site key found in the page source |
+| `proxy` | string or object | No | Proxy configuration for this specific request |
+| `user_agent` | string | No | Custom user agent string for this specific request |
+| `cdata` | string | No | Custom data to be passed to the Turnstile widget |
+
+#### Proxy Parameter
+
+The `proxy` parameter can be specified in two formats:
+
+**String format** (for proxies without authentication):
+```json
+"proxy": "http://proxy.example.com:8080"
+```
+
+**Object format** (for proxies with authentication):
+```json
+"proxy": {
+  "server": "http://proxy.example.com:8080",
+  "username": "proxy_user",
+  "password": "proxy_pass"
+}
+```
+
+#### User Agent Parameter
+
+The `user_agent` parameter allows you to specify a custom user agent string:
+```json
+"user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15"
+```
+
+#### CData Parameter
+
+The `cdata` parameter allows you to pass custom data to the Turnstile widget. This is useful for certain sites that require additional data:
+```json
+"cdata": "custom-data-value"
+```
+
+If `cdata` is not provided or is `null`, the entire `data-cdata` attribute will be removed from the HTML template.
+
 ### Get token
 
 #### cURL
@@ -95,6 +141,59 @@ curl --location --request GET 'http://127.0.0.1:8088/solve' \
 --data '{
     "site_url": "https://spotifydown.com",
     "site_key": "0x4AAAAAAAByvC31sFG0MSlp"
+}'
+```
+
+##### With Proxy and User Agent
+
+```bash
+# With proxy (string format)
+curl --location --request GET 'http://127.0.0.1:8088/solve' \
+--header 'ngrok-skip-browser-warning: _' \
+--header 'secret: jWRN7DH6' \
+--header 'Content-Type: application/json' \
+--data '{
+    "site_url": "https://spotifydown.com",
+    "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
+    "proxy": "http://proxy.example.com:8080"
+}'
+
+# With proxy authentication (object format)
+curl --location --request GET 'http://127.0.0.1:8088/solve' \
+--header 'ngrok-skip-browser-warning: _' \
+--header 'secret: jWRN7DH6' \
+--header 'Content-Type: application/json' \
+--data '{
+    "site_url": "https://spotifydown.com",
+    "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
+    "proxy": {
+        "server": "http://proxy.example.com:8080",
+        "username": "proxy_user", 
+        "password": "proxy_pass"
+    }
+}'
+
+# With custom user agent
+curl --location --request GET 'http://127.0.0.1:8088/solve' \
+--header 'ngrok-skip-browser-warning: _' \
+--header 'secret: jWRN7DH6' \
+--header 'Content-Type: application/json' \
+--data '{
+    "site_url": "https://spotifydown.com",
+    "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
+    "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15"
+}'
+
+# With both proxy and user agent
+curl --location --request GET 'http://127.0.0.1:8088/solve' \
+--header 'ngrok-skip-browser-warning: _' \
+--header 'secret: jWRN7DH6' \
+--header 'Content-Type: application/json' \
+--data '{
+    "site_url": "https://spotifydown.com",
+    "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
+    "proxy": "http://proxy.example.com:8080",
+    "user_agent": "Mozilla/5.0 (Android 11; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0"
 }'
 ```
 
@@ -137,6 +236,68 @@ data = response.json()
 token = data['token']
 print("Token:", token)
 
+```
+
+#### With Proxy and User Agent
+
+You can now include proxy and user_agent parameters in your requests:
+
+```python
+import requests
+
+SERVER_URL = "http://127.0.0.1:8088"
+
+url = f"{SERVER_URL}/solve"
+
+headers = {
+  'ngrok-skip-browser-warning': '_',
+  'secret': 'jWRN7DH6',
+  'Content-Type': 'application/json'
+}
+
+# Basic request with proxy (string format)
+json_data = {
+  "site_url": "https://spotifydown.com",
+  "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
+  "proxy": "http://proxy.example.com:8080"
+}
+
+# Or with proxy authentication (object format)
+json_data = {
+  "site_url": "https://spotifydown.com",
+  "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
+  "proxy": {
+    "server": "http://proxy.example.com:8080",
+    "username": "proxy_user",
+    "password": "proxy_pass"
+  }
+}
+
+# With custom user agent
+json_data = {
+  "site_url": "https://spotifydown.com",
+  "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
+  "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15"
+}
+
+# With both proxy and user agent
+json_data = {
+  "site_url": "https://spotifydown.com",
+  "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
+  "proxy": "http://proxy.example.com:8080",
+  "user_agent": "Mozilla/5.0 (Android 11; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0"
+}
+
+response = requests.get(
+  url=url,
+  headers=headers,
+  json=json_data,
+)
+
+response.raise_for_status()
+data = response.json()
+token = data['token']
+print("Token:", token)
 ```
 
 ---

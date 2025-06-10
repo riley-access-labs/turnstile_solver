@@ -170,21 +170,76 @@ class TurnstileSolverServer:
       if not (site_key := data.get('site_key')):
         return self._bad("site_key required")
 
-      async with self._lock:
-        pagePool = await self.browser_context_pool.get()
-        page = await pagePool.get()
+      # Extract optional proxy and user_agent from request
+      proxy_config = data.get('proxy')
+      user_agent = data.get('user_agent')
+      cdata = data.get('cdata')
 
-      try:
-        if not (result := await self.solver.solve(
-            site_url=site_url,
-            site_key=site_key,
-            page=page,
-            about_blank_on_finish=True,
-        )):
-          return self._error(self.solver.error)
-      finally:
-        await self.browser_context_pool.put_back(pagePool)
-        await pagePool.put_back(page)
+      # If proxy or user_agent is specified, create a temporary browser context
+      if proxy_config or user_agent:
+        from turnstile_solver.proxy import Proxy
+        
+        # Parse proxy configuration if provided
+        proxy = None
+        if proxy_config:
+          if isinstance(proxy_config, str):
+            # Simple proxy URL format
+            proxy = Proxy(server=proxy_config, username=None, password=None)
+          elif isinstance(proxy_config, dict):
+            # Detailed proxy configuration
+            proxy = Proxy(
+              server=proxy_config.get('server', ''),
+              username=proxy_config.get('username'),
+              password=proxy_config.get('password')
+            )
+          else:
+            return self._bad("Invalid proxy format. Use string URL or object with server, username, password")
+
+        # Create temporary browser context with specific proxy/user_agent
+        browser = self.browser_context_pool.browser
+        if not browser:
+          return self._error("Browser not available in context pool")
+
+        context_options = {"no_viewport": True}
+        if proxy:
+          context_options["proxy"] = proxy.dict()
+        if user_agent:
+          context_options["user_agent"] = user_agent
+
+        context = await browser.new_context(**context_options)
+        page = await context.new_page()
+
+        try:
+          if not (result := await self.solver.solve(
+              site_url=site_url,
+              site_key=site_key,
+              page=page,
+              about_blank_on_finish=True,
+              cdata=cdata,
+          )):
+            return self._error(self.solver.error)
+        finally:
+          await page.close()
+          await context.close()
+
+      else:
+        # Use existing browser context pool for requests without proxy/user_agent
+        async with self._lock:
+          pagePool = await self.browser_context_pool.get()
+          page = await pagePool.get()
+
+        try:
+          if not (result := await self.solver.solve(
+              site_url=site_url,
+              site_key=site_key,
+              page=page,
+              about_blank_on_finish=True,
+              cdata=cdata,
+          )):
+            return self._error(self.solver.error)
+        finally:
+          await self.browser_context_pool.put_back(pagePool)
+          await pagePool.put_back(page)
 
       self._page = result.page
       return self._ok({

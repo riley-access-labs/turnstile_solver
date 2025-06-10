@@ -111,6 +111,6 @@ service_init || exit 6
 
 if [ "$START_SERVER" = "true" ]; then
   echo "Starting server in headful mode..."
-  xvfb-run -a python3 solver --browser "${SOLVER_BROWSER}" --port "${SOLVER_SERVER_PORT}"
+  xvfb-run -a python3 solver --browser "${SOLVER_BROWSER}" --port "${SOLVER_SERVER_PORT}" 
 #  xvfb-run -a python3 "${WORKSPACE}/turnstile_solver/main.py"
 fi
