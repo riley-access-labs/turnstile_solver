@@ -2,7 +2,7 @@
 
 declare -r TARGET_USER="root"
 #declare -r WORKSPACE="/${TARGET_USER}/Desktop"
-declare -r REPO_URL="https://github.com/odell0111/turnstile_solver.git"
+declare -r REPO_URL="https://github.com/riley-access-labs/turnstile_solver"
 
 start_vnc_server() {
   # Kill any previous previous session
