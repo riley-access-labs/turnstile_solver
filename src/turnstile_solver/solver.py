@@ -65,7 +65,7 @@ BROWSER_ARGS = {
   '--no-service-autorun',
   '--password-store=basic',
   '--log-level=3',
-  '--proxy-bypass-list=<-loopback>;localhost;127.0.0.1;*.local',
+  '--proxy-bypass-list=<-loopback>;localhost;127.0.0.1;*.local;pr.oxylabs.io:7777',
 
   # Not needed, here just for reference
   # Network/Connection Tuning
