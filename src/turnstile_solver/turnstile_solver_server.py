@@ -187,11 +187,11 @@ class TurnstileSolverServer:
             if len(proxy_parts) == 2:
               # Format: HOST:PORT (no authentication)
               host, port = proxy_parts
-              proxy = Proxy(server=f"http://{host}:{port}", username=None, password=None)
+              proxy = Proxy(server=f"{host}:{port}", username=None, password=None)
             elif len(proxy_parts) == 4:
               # Format: HOST:PORT:USERNAME:PASSWORD
               host, port, username, password = proxy_parts
-              proxy = Proxy(server=f"http://{host}:{port}", username=username, password=password)
+              proxy = Proxy(server=f"{host}:{port}", username=username, password=password)
             else:
               return self._bad("Invalid proxy format. Use HOST:PORT or HOST:PORT:USERNAME:PASSWORD")
           else:
@@ -206,7 +206,7 @@ class TurnstileSolverServer:
         if proxy:
           context_options["proxy"] = proxy.dict()
         if user_agent:
-          context_options["userAgent"] = user_agent
+          context_options["user_agent"] = user_agent
 
         context = await browser.new_context(**context_options)
         page = await context.new_page()
