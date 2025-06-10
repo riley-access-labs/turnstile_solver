@@ -143,7 +143,7 @@ curl --location --request GET 'http://127.0.0.1:8088/solve' \
 ##### With Proxy and User Agent
 
 ```bash
-# With proxy (string format)
+# With proxy (no authentication)
 curl --location --request GET 'http://127.0.0.1:8088/solve' \
 --header 'ngrok-skip-browser-warning: _' \
 --header 'secret: jWRN7DH6' \
@@ -151,10 +151,10 @@ curl --location --request GET 'http://127.0.0.1:8088/solve' \
 --data '{
     "site_url": "https://spotifydown.com",
     "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
-    "proxy": "http://proxy.example.com:8080"
+    "proxy": "proxy.example.com:8080"
 }'
 
-# With proxy authentication (object format)
+# With proxy authentication
 curl --location --request GET 'http://127.0.0.1:8088/solve' \
 --header 'ngrok-skip-browser-warning: _' \
 --header 'secret: jWRN7DH6' \
@@ -162,11 +162,7 @@ curl --location --request GET 'http://127.0.0.1:8088/solve' \
 --data '{
     "site_url": "https://spotifydown.com",
     "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
-    "proxy": {
-        "server": "http://proxy.example.com:8080",
-        "username": "proxy_user", 
-        "password": "proxy_pass"
-    }
+    "proxy": "proxy.example.com:8080:username:password"
 }'
 
 # With custom user agent
@@ -180,7 +176,7 @@ curl --location --request GET 'http://127.0.0.1:8088/solve' \
     "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15"
 }'
 
-# With both proxy and user agent
+# With cdata
 curl --location --request GET 'http://127.0.0.1:8088/solve' \
 --header 'ngrok-skip-browser-warning: _' \
 --header 'secret: jWRN7DH6' \
@@ -188,8 +184,20 @@ curl --location --request GET 'http://127.0.0.1:8088/solve' \
 --data '{
     "site_url": "https://spotifydown.com",
     "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
-    "proxy": "http://proxy.example.com:8080",
-    "user_agent": "Mozilla/5.0 (Android 11; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0"
+    "cdata": "custom-data-value"
+}'
+
+# With proxy, user agent, and cdata
+curl --location --request GET 'http://127.0.0.1:8088/solve' \
+--header 'ngrok-skip-browser-warning: _' \
+--header 'secret: jWRN7DH6' \
+--header 'Content-Type: application/json' \
+--data '{
+    "site_url": "https://spotifydown.com",
+    "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
+    "proxy": "proxy.example.com:8080:username:password",
+    "user_agent": "Mozilla/5.0 (Android 11; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0",
+    "cdata": "custom-data-value"
 }'
 ```
 
@@ -208,9 +216,37 @@ headers = {
   'Content-Type': 'application/json'
 }
 
+# Basic request with proxy (string format)
 json_data = {
   "site_url": "https://spotifydown.com",
-  "site_key": "0x4AAAAAAAByvC31sFG0MSlp"
+  "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
+  "proxy": "proxy.example.com:8080"
+}
+
+# Or with proxy authentication (object format)
+json_data = {
+  "site_url": "https://spotifydown.com",
+  "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
+  "proxy": {
+    "server": "http://proxy.example.com:8080",
+    "username": "proxy_user",
+    "password": "proxy_pass"
+  }
+}
+
+# With custom user agent
+json_data = {
+  "site_url": "https://spotifydown.com",
+  "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
+  "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15"
+}
+
+# With both proxy and user agent
+json_data = {
+  "site_url": "https://spotifydown.com",
+  "site_key": "0x4AAAAAAAByvC31sFG0MSlp",
+  "proxy": "http://proxy.example.com:8080",
+  "user_agent": "Mozilla/5.0 (Android 11; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0"
 }
 
 response = requests.get(
