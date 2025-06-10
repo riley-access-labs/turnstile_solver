@@ -6,10 +6,10 @@ build-backend = "setuptools.build_meta"
 #dynamic = ["version"]
 dynamic = ["dependencies"]
 name = "turnstile_solver"
-version = "3.24"
+version = "3.25"
 description = "Python server to automatically solve Cloudflare Turnstile CAPTCHA with an average solving time of two seconds"
 readme = "README.md"
-authors = [{ name = "OGM" }]
+authors = [{ name = "OGM (Modified by Riley Webb)" }]
 license = { file = "LICENSE" }
 classifiers = [
     "License :: OSI Approved :: MIT License",

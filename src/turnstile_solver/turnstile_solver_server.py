@@ -204,7 +204,7 @@ class TurnstileSolverServer:
           browser, playwright = await self.solver.get_browser(proxy=proxy)
           context = await self.solver.get_browser_context(browser=browser, proxy=proxy)
           
-          page = await self.solver._setup_page(context=context, site_url=site_url, site_key=site_key, cdata=cdata)
+          page = await self.solver._setup_page(page_or_context=context, site_url=site_url, site_key=site_key, cdata=cdata)
         except Exception as e:
           logger.error(f"Failed to create browser context: {e}")
           return self._error(f"Failed to create browser context: {str(e)}")
