@@ -175,64 +175,43 @@ class TurnstileSolverServer:
       proxy_config = data.get('proxy')
       cdata = data.get('cdata')
 
-      # If proxy is specified, create a temporary browser context
+      # Parse proxy configuration if provided
+      proxy = None
       if proxy_config:
-        # Parse proxy configuration if provided
-        proxy = None
-        if proxy_config:
-          if isinstance(proxy_config, str):
-            # Parse format: PROXY_HOST:PROXY_PORT:PROXY_USERNAME:PROXY_PASSWORD
-            proxy_parts = proxy_config.split(':')
-            if len(proxy_parts) == 2:
-              # Format: HOST:PORT (no authentication)
-              host, port = proxy_parts
-              proxy = Proxy(server=f"{host}:{port}", username=None, password=None)
-            elif len(proxy_parts) == 4:
-              # Format: HOST:PORT:USERNAME:PASSWORD
-              host, port, username, password = proxy_parts
-              proxy = Proxy(server=f"{host}:{port}", username=username, password=password)
-            else:
-              return self._bad("Invalid proxy format. Use HOST:PORT or HOST:PORT:USERNAME:PASSWORD")
+        if isinstance(proxy_config, str):
+          # Parse format: PROXY_HOST:PROXY_PORT:PROXY_USERNAME:PROXY_PASSWORD
+          proxy_parts = proxy_config.split(':')
+          if len(proxy_parts) == 2:
+            # Format: HOST:PORT (no authentication)
+            host, port = proxy_parts
+            proxy = Proxy(server=f"{host}:{port}", username=None, password=None)
+          elif len(proxy_parts) == 4:
+            # Format: HOST:PORT:USERNAME:PASSWORD
+            host, port, username, password = proxy_parts
+            proxy = Proxy(server=f"{host}:{port}", username=username, password=password)
           else:
-            return self._bad("Invalid proxy format. Expected string in format HOST:PORT or HOST:PORT:USERNAME:PASSWORD")
-        
-        # Use existing browser context pool for requests without proxy
-        async with self._lock:
-          pagePool = await self.browser_context_pool.get()
-          page = await pagePool.get()
+            return self._bad("Invalid proxy format. Use HOST:PORT or HOST:PORT:USERNAME:PASSWORD")
+        else:
+          return self._bad("Invalid proxy format. Expected string in format HOST:PORT or HOST:PORT:USERNAME:PASSWORD")
+      
+      # Use existing browser context pool for all requests
+      async with self._lock:
+        pagePool = await self.browser_context_pool.get()
+        page = await pagePool.get()
 
-        try:
-          if not (result := await self.solver.solve(
-              site_url=site_url,
-              site_key=site_key,
-              page=page,
-              about_blank_on_finish=True,
-              cdata=cdata,
-              proxy=proxy,
-          )):
-            return self._error(self.solver.error)
-        finally:
-          await self.browser_context_pool.put_back(pagePool)
-          await pagePool.put_back(page)
-
-      else:
-        # Use existing browser context pool for requests without proxy
-        async with self._lock:
-          pagePool = await self.browser_context_pool.get()
-          page = await pagePool.get()
-
-        try:
-          if not (result := await self.solver.solve(
-              site_url=site_url,
-              site_key=site_key,
-              page=page,
-              about_blank_on_finish=True,
-              cdata=cdata,
-          )):
-            return self._error(self.solver.error)
-        finally:
-          await self.browser_context_pool.put_back(pagePool)
-          await pagePool.put_back(page)
+      try:
+        if not (result := await self.solver.solve(
+            site_url=site_url,
+            site_key=site_key,
+            page=page,
+            about_blank_on_finish=True,
+            cdata=cdata,
+            proxy=proxy,
+        )):
+          return self._error(self.solver.error)
+      finally:
+        await self.browser_context_pool.put_back(pagePool)
+        await pagePool.put_back(page)
 
       self._page = result.page
       return self._ok({
