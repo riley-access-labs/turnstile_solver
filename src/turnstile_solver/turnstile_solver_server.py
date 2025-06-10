@@ -198,13 +198,10 @@ class TurnstileSolverServer:
             return self._bad("Invalid proxy format. Expected string in format HOST:PORT or HOST:PORT:USERNAME:PASSWORD")
 
         # Create temporary browser context with specific proxy/user_agent
-        browser = self.browser_context_pool.browser
-        if not browser:
-          return self._error("Browser not available in context pool")
-
-        # Use the solver's get_browser_context method which properly handles proxies
-        context, _ = await self.solver.get_browser_context(
-          browser=browser,
+        # We need a separate browser instance for custom proxy/user_agent requests
+        # to avoid conflicts with the pooled browser
+        context, playwright = await self.solver.get_browser_context(
+          browser=None,  # This will create a new browser instance
           playwright=None,
           proxy=proxy
         )
@@ -227,6 +224,9 @@ class TurnstileSolverServer:
         finally:
           await page.close()
           await context.close()
+          # Also close the browser we created
+          await context.browser.close()
+          await playwright.stop()
 
       else:
         # Use existing browser context pool for requests without proxy/user_agent
