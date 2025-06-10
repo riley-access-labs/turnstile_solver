@@ -202,13 +202,17 @@ class TurnstileSolverServer:
         if not browser:
           return self._error("Browser not available in context pool")
 
-        context_options = {"no_viewport": True}
-        if proxy:
-          context_options["proxy"] = proxy.dict()
+        # Use the solver's get_browser_context method which properly handles proxies
+        context, _ = await self.solver.get_browser_context(
+          browser=browser,
+          playwright=None,
+          proxy=proxy
+        )
+        
+        # Set user agent if provided (must be done after context creation)
         if user_agent:
-          context_options["user_agent"] = user_agent
-
-        context = await browser.new_context(**context_options)
+          await context.set_extra_http_headers({"User-Agent": user_agent})
+        
         page = await context.new_page()
 
         try:
