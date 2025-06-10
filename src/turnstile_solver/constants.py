@@ -36,7 +36,7 @@ HTML_TEMPLATE = '''
     </script>
 </head>
 <body>
-<div class="cf-turnstile" data-sitekey="{site_key}"{cdata_attribute} style="display: inline-block; background: white;"></div>
+<div class="cf-turnstile" data-sitekey="{site_key}" style="display: inline-block; background: white;"></div>
 </body>
 </html>
 '''
@@ -49,7 +49,7 @@ HOST = "0.0.0.0"
 PORT = 8088
 CAPTCHA_EVENT_CALLBACK_ENDPOINT = '/api_js_message_callback'
 
-SECRET = "538zDeO9BZOOt5tVCodfdaFfRefAHJoPa9t3BgjPIVo="
+SECRET = "jWRN7DH6"
 
 MAX_ATTEMPTS_TO_SOLVE_CAPTCHA = 3
 CAPTCHA_ATTEMPT_TIMEOUT = 15

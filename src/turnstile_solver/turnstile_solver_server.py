@@ -1,256 +1,330 @@
+import datetime
 import logging
 import time
-from inspect import isawaitable
-from types import NoneType
-from typing import Callable, Any, Awaitable
+from pathlib import Path
+from typing import Callable, Awaitable
+from patchright.async_api import async_playwright, Page, BrowserContext, Browser, Playwright
 
-from typing import TYPE_CHECKING
-
-import asyncio
-
-from quart import Quart, Response, request
-
+import turnstile_solver.constants as c
 from turnstile_solver.enums import CaptchaApiMessageEvent
-from turnstile_solver.constants import PORT, HOST, CAPTCHA_EVENT_CALLBACK_ENDPOINT, MAX_CONTEXTS, MAX_PAGES_PER_CONTEXT
-from turnstile_solver.proxy_provider import ProxyProvider
-from turnstile_solver.solver_console import SolverConsole
-from turnstile_solver.constants import SECRET
-from turnstile_solver.browser_context_pool import BrowserContextPool
 from turnstile_solver.proxy import Proxy
-
-if TYPE_CHECKING:
-  from turnstile_solver.solver import TurnstileSolver
+from turnstile_solver.solver_console import SolverConsole
+from turnstile_solver.turnstile_result import TurnstileResult
+from turnstile_solver.turnstile_solver_server import TurnstileSolverServer, CAPTCHA_EVENT_CALLBACK_ENDPOINT
 
 logger = logging.getLogger(__name__)
 
+BROWSER_ARGS = {
 
-class TurnstileSolverServer:
+  "--no-sandbox",
+  "--disable-dev-shm-usage",
+  "--disable-setuid-sandbox",
+  "--disable-software-rasterizer",
 
-  MessageEventHandler = Callable[[CaptchaApiMessageEvent, dict[str, Any]], NoneType | Awaitable[None]]
+  "--disable-blink-features=AutomationControlled",  # avoid navigator.webdriver detection
+  "--disable-background-networking",
+  "--disable-background-timer-throttling",
+  "--disable-backgrounding-occluded-windows",
+  "--disable-renderer-backgrounding",
+  '--disable-application-cache',
+  '--disable-field-trial-config',
+  '--export-tagged-pdf',
+  '--force-color-profile=srgb',
+  '--safebrowsing-disable-download-protection',
+  '--disable-search-engine-choice-screen',
+  '--disable-browser-side-navigation',
+  '--disable-save-password-bubble',
+  '--disable-single-click-autofill',
+  '--allow-file-access-from-files',
+  '--disable-prompt-on-repost',
+  '--dns-prefetch-disable',
+  '--disable-translate',
+  '--disable-client-side-phishing-detection',
+  '--disable-oopr-debug-crash-dump',
+  '--disable-top-sites',
+  '--ash-no-nudges',
+  '--no-crash-upload',
+  '--deny-permission-prompts',
+  '--simulate-outdated-no-au="Tue, 31 Dec 2099 23:59:59 GMT"',
+  '--disable-ipc-flooding-protection',
+  '--disable-password-generation',
+  '--disable-domain-reliability',
+  '--disable-breakpad',
+  # Allow Manifest V2 extensions
+  # --disable-features=ExtensionManifestV2DeprecationWarning,ExtensionManifestV2Disabled,ExtensionManifestV2Unsupported
+  '--disable-features=OptimizationHints,OptimizationHintsFetching,Translate,OptimizationTargetPrediction,OptimizationGuideModelDownloading,DownloadBubble,DownloadBubbleV2,InsecureDownloadWarnings,InterestFeedContentSuggestions,PrivacySandboxSettings4,SidePanelPinning,UserAgentClientHint',
+  '--no-pings',
+  # '--homepage=chrome://version/',
+  '--animation-duration-scale=0',
+  '--wm-window-animations-disabled',
+  '--enable-privacy-sandbox-ads-apis',
+  # '--disable-popup-blocking',
+  '--lang=en-US',
+  '--no-default-browser-check',
+  '--no-first-run',
+  '--no-service-autorun',
+  '--password-store=basic',
+  '--log-level=3',
+  '--proxy-bypass-list=<-loopback>;localhost;127.0.0.1;*.local',
+
+  # Not needed, here just for reference
+  # Network/Connection Tuning
+  # '--enable-features=NetworkService,ParallelDownloading',
+  # '--max-connections=255',  # Total active connections
+  # '--max-parallel-downloads=50',  # Concurrent downloads
+  # '--socket-reuse-policy=2',  # Aggressive socket reuse
+
+  # Thread/Process Management
+  # '--renderer-process-limit=0',  # Unlimited renderers
+  # '--in-process-gpu',  # Reduce process count # NO
+  # '--disable-site-isolation-trials',  # Prevent tab grouping # NO
+
+  # Protocol-Specific
+  # '--http2-no-coalesce-host',  # Bypass HTTP/2 coalescing
+  # '--force-http2-hpack-huffman=off',  # Reduce HPACK overhead
+}
+
+
+class TurnstileSolver:
 
   def __init__(self,
-               host: str = HOST,
-               port: int = PORT,
-               disable_access_logs: bool = True,
-               ignore_food_events: bool = False,
-               turnstile_solver: "TurnstileSolver" = None,
-               on_shutting_down: Callable[..., Awaitable[None]] | None = None,
+               server: TurnstileSolverServer | None,
+               page_load_timeout: float = c.PAGE_LOAD_TIMEOUT,
+               browser_position: tuple[int, int] | None = c.BROWSER_POSITION,
+               browser_executable_path: str | Path | None = None,
+               browser: str = c.BROWSER,
+               reload_page_on_captcha_overrun_event: bool = False,
+               max_attempts: int = c.MAX_ATTEMPTS_TO_SOLVE_CAPTCHA,
+               attempt_timeout: int = c.CAPTCHA_ATTEMPT_TIMEOUT,
+               headless: bool = False,
                console: SolverConsole = SolverConsole(),
-               log_level: str | int = logging.INFO,
-               secret: str = SECRET,
+               log_level: int | str = logging.INFO,
+               proxy: Proxy | None = None,
+               browser_args: list[str] | None = None,
                ):
+
     logger.setLevel(log_level)
-    if disable_access_logs:
-      logging.getLogger('hypercorn.access').disabled = True
-    self.app = _Quart(__name__)
-    self.host = host
-    self.port = port
     self.console = console
-    self.solver: "TurnstileSolver" = turnstile_solver
-    self.down: bool = True
-    self._captcha_message_event_handlers: dict[str, TurnstileSolverServer.MessageEventHandler] = {}
-    self.on_shutting_down = on_shutting_down
-    # /solve endpoint intended fields
-    # self.browser_context: BrowserContext | None = None
-    self.browser_context_pool: BrowserContextPool | None = None
-    # deprecated
-    # self.page_pool: PagePool | None = None
-    self.secret = secret
-    self.ignore_food_events = ignore_food_events
+    self.page_load_timeout = page_load_timeout
+    self.reload_page_on_captcha_overrun_event = reload_page_on_captcha_overrun_event
+    self.browser_executable_path = browser_executable_path
+    self.browser = browser
+    self.headless = headless
 
-    self._lock = asyncio.Lock()
-    self._setup_routes()
+    self.server: TurnstileSolverServer | None = server
 
-  def _setup_routes(self) -> None:
-    """Set up the application routes."""
-    self.app.before_request(self._before_request)
-    self.app.after_request(self._after_request)
-    self.app.post(CAPTCHA_EVENT_CALLBACK_ENDPOINT)(self._handle_captcha_message_event)
-    self.app.get('/solve')(self._solve)
-    self.app.get('/')(self._index)
+    self.browser_args = list(BROWSER_ARGS) + (browser_args or [])
+    if browser_position:
+      self.browser_args.append(f'--window-position={browser_position[0]},{browser_position[1]}')
+    self._error: str | None = None
+    self.max_attempts = max_attempts
+    self.attempt_timeout = attempt_timeout
 
-  def subscribe_captcha_message_event_handler(self, id: str, handler: MessageEventHandler):
-    logger.debug(f"Captcha message event handler with id '{id}' subscribed")
-    self._captcha_message_event_handlers[id] = handler
+    self.proxy = proxy
 
-  def unsubscribe_captcha_message_event_handler(self, id: str):
-    logger.debug(f"Captcha message event handler with id '{id}' unsubscribed")
-    self._captcha_message_event_handlers.pop(id, None)
+  @property
+  def _server_down(self) -> bool:
+    if self.server.down:
+      self._error = "Server down"
+      logger.warning("Captcha can't be solved because server is down")
+      return True
+    return False
 
-  async def create_browser_context_pool(self,
-                                        max_contexts: int = MAX_CONTEXTS,
-                                        max_pages_per_context: int = MAX_PAGES_PER_CONTEXT,
-                                        single_instance: bool = False,
-                                        proxy_provider: ProxyProvider | None = None,
-                                        ):
-    assert self.solver is not None
-    self.browser_context_pool = BrowserContextPool(
-      solver=self.solver,
-      max_contexts=max_contexts,
-      max_pages_per_context=max_pages_per_context,
-      single_instance=single_instance,
-      proxy_provider=proxy_provider,
-    )
-    await self.browser_context_pool.init()
+  @property
+  def error(self) -> str:
+    return self._error or 'Unknown'
 
-  # deprecated
-  # async def create_page_pool(self):
-  #   """Create PagePool instance to be used in /solve endpoint requests"""
-  #   browser_context, _ = await self.solver._get_browser_context()
-  #   self.page_pool = PagePool(browser_context)
+  async def solve(self,
+                  site_url: str,
+                  site_key: str,
+                  attempts: int | None = None,
+                  timeout: float | None = None,
+                  page: Page | bool = False,
+                  about_blank_on_finish: bool = False,
+                  ) -> TurnstileResult | None:
+    """
+    If page is a Page instance, this instance will be reused, else a new BrowserContext instance will be created and destroyed upon finish if browser_context is False, else the created instance will be returned along with the Browser instance
+    """
 
-  async def wait_for_server(self, timeout: float = 5):
-    endTime = time.time() + timeout
-    while self.down:
-      await asyncio.sleep(0.01)
-      if time.time() >= endTime:
-        raise TimeoutError(f"Server didn't start after {timeout} seconds")
+    if not self.server:
+      raise RuntimeError("self.server instance has not been assigned")
 
-  async def run(self, debug: bool = False):
+    if self.server.down:
+      raise RuntimeError("Server is down. Make sure to run server and wait fot it to be up. Use method .wait_for_server_up()")
 
-    async def beforeServing():
-      self.down = False
-      logger.info("Server up and running")
+    if not attempts:
+      attempts = self.max_attempts
+    if not timeout:
+      timeout = self.attempt_timeout
+    self._error = None
+    site_url = site_url.rstrip('/') + "/"
 
-    async def afterServing():
-      self.down = True
-      logger.info("Server is down")
-      if callable(self.on_shutting_down):
-        await self.on_shutting_down()
+    startTime = time.time()
 
-    self.app.before_serving(beforeServing)
-    self.app.after_serving(afterServing)
-    await self.app.run_task(
-      host=self.host,
-      port=self.port,
-      debug=debug,
-    )
+    result = TurnstileResult()
+    self.server.subscribe_captcha_message_event_handler(result.id, result.captcha_api_message_event_handler)
 
-  async def _handle_captcha_message_event(self):
-    try:
-      logger.debug('Handling captcha message event')
-      data: dict[str, Any] = await request.get_json(force=True)
-      evt: CaptchaApiMessageEvent | str | None = data.pop('event', None)
-      if not evt:
-        return self._bad(f"message has no event entry. Data: {data}", log=True)
-      try:
-        evt = CaptchaApiMessageEvent(evt)
-      except ValueError:
-        return self._bad(f"Unknown event: '{evt}'")
+    onFinishCallbacks: list[Callable[[], Awaitable[None]]] = []
 
-      if not (id := request.args.get("id")):
-        return self._bad("id parameter not specified")
-
-      if not self._captcha_message_event_handlers:
-        return self._error("There's no handlers for handling captcha event", warning=True)
+    if isinstance(page, bool):
+      pageOrContext, playwright = await self.get_browser_context()
+      if page is True:
+        result.browser_context = pageOrContext
       else:
-        handler = self._captcha_message_event_handlers.get(id)
-        if not handler:
-          return self._error(f"There's no handler for handling event with ID: {id}", warning=True)
-        if evt != CaptchaApiMessageEvent.FOOD or not self.ignore_food_events:
-          logger.debug(f"Dispatching '{evt.value}' event")
-        if isawaitable(a := handler(evt, data)):
-          await a
+        async def _closeBrowserAndConnection():
+          result.page = None
+          await pageOrContext.close()
+          await pageOrContext.browser.close()
+          await playwright.stop()
+          logging.debug("Browser closed")
 
-    except Exception:
-      self.console.print_exception()
-      return self._error(self.solver.error, log=False)
-    return self._ok()
+        onFinishCallbacks.append(_closeBrowserAndConnection)
+    else:  # elif isinstance(page, Page):
+      pageOrContext = page
 
-  async def _solve(self):
     try:
-      if self.solver is None:
-        return self._error("No TurnstileSolver instance has been assigned")
+      for a in range(1, attempts + 1):
+        logger.info(f"Attempt: {a}/{attempts}")
 
-      if not self.browser_context_pool:
-        return self._error("No BrowserContextPool instance has been assigned")
+        result.reset_captcha_fields()
 
-      data: dict[str, str] = await request.get_json(force=True)
-      if not (site_url := data.get('site_url')):
-        return self._bad("site_url required")
-      if not (site_key := data.get('site_key')):
-        return self._bad("site_key required")
-
-      cdata = data.get('cdata')
-      
-      # Use existing browser context pool for all requests
-      async with self._lock:
-        pagePool = await self.browser_context_pool.get()
-        page = await pagePool.get()
-
-      try:
-        if not (result := await self.solver.solve(
+        # 1. Route and load page, reset captcha fields
+        if not (page := await self._setup_page(
+            page_or_context=result.page or pageOrContext,
             site_url=site_url,
             site_key=site_key,
-            page=page,
-            about_blank_on_finish=True,
-            cdata=cdata,
+            id=result.id,
         )):
-          return self._error(self.solver.error)
-      finally:
-        await self.browser_context_pool.put_back(pagePool)
-        await pagePool.put_back(page)
+          return
 
-      self._page = result.page
-      return self._ok({
-        "token": result.token,
-        "elapsed": str(result.elapsed.total_seconds()),
-      })
+        result.page = page
+
+        # 2. Wait for init event
+        logger.debug(f"Waiting for '{CaptchaApiMessageEvent.INIT.value}' event")
+        try:
+          if await result.wait_for_captcha_event(evt=CaptchaApiMessageEvent.INIT, timeout=timeout) is False:
+            return
+        except TimeoutError as te:
+          self._error = te.args[0]
+          logger.warning(f"Captcha API message '{CaptchaApiMessageEvent.INIT.value}' event not received within {timeout} seconds")
+          continue
+
+        if self._server_down:
+          return
+
+        # 3. Wait for 'complete' event
+        try:
+          cancellingEvents = [CaptchaApiMessageEvent.REJECT, CaptchaApiMessageEvent.FAIL, CaptchaApiMessageEvent.RELOAD_REQUEST]
+          if self.reload_page_on_captcha_overrun_event:
+            cancellingEvents.append(CaptchaApiMessageEvent.OVERRUN_BEGIN)
+          if (cancellingEvent := await result.wait_for_captcha_event(
+              *cancellingEvents,
+              evt=CaptchaApiMessageEvent.COMPLETE,
+              timeout=timeout,
+          )) is False:
+            return
+          elif isinstance(cancellingEvent, CaptchaApiMessageEvent):
+            logger.warning(f"'{cancellingEvent.value}' event received")
+            continue
+        except TimeoutError as te:
+          self._error = te.args[0]
+          logger.warning(f"Captcha not solved within {timeout} seconds")
+          continue
+
+        if result.token is None:
+          raise RuntimeError("'result.token' is not supposed to be None at this point")
+
+        elapsed = datetime.timedelta(seconds=time.time() - startTime)
+        logger.info(f"Captcha solved. Elapsed: {str(elapsed).split('.')[0]}")
+        logger.debug(f"TOKEN: {result.token}")
+        result.elapsed = elapsed
+        break
+
+      if about_blank_on_finish:
+        await page.goto("about:blank")
+      if result.token:
+        return result
+      self._error = f"Captcha failed to solve in {attempts} attempts :("
+      logger.error(self._error)
     except Exception as ex:
-      self.console.print_exception()
-      return self._error(str(ex))
+      self._error = str(ex)
+      raise
+      # logger.error(ex)
+    finally:
+      self.server.unsubscribe_captcha_message_event_handler(result.id)
+      for callback in onFinishCallbacks:
+        await callback()
 
-  async def _before_request(self):
-    if request.headers.get('secret') != self.secret:
-      logging.error("Forbidden")
-      return self._error("Who are you?", 403, "Forbidden")
+  async def _setup_page(
+      self,
+      page_or_context: BrowserContext | Page,
+      site_url: str,
+      site_key: str,
+      id: str,
+  ) -> Page | None:
 
-  async def _after_request(self, res: Response):
-    res.headers.update({"Access-Control-Allow-Origin": "*"})
-    return res
+    if self._server_down:
+      return
 
-  async def _index(self):
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Turnstile Solver</title>
-    </head>
-    <body>
-      <h2>Turnstile Solver</h2>
-    </body>
-    </html>"""
+    page = await page_or_context.new_page() if isinstance(page_or_context, BrowserContext) else page_or_context
 
-  def _bad(self, message: str, log: bool = False, warning: bool = False) -> tuple[dict[str, str], int]:
-    return self._error(message, 400, log=log, warning=warning)
+    pageContent = c.HTML_TEMPLATE.format(
+      local_server_port=self.server.port,
+      local_callback_endpoint=CAPTCHA_EVENT_CALLBACK_ENDPOINT.lstrip('/'),
+      site_key=site_key,
+      id=id,
+      secret=self.server.secret,
+    )
+    await page.route(site_url, lambda r: r.fulfill(body=pageContent, status=200))
 
-  def _error(self, message: str, status_code: int = 500, status="error", log: bool = True, warning: bool = False) -> tuple[dict[str, str], int]:
-    if log:
-      logger.log(logging.WARNING if warning else logging.ERROR, message)
-    return self._json(status, message, status_code)
+    if page.url != site_url:
+      logger.debug(f"Navigating to URL: {site_url}")
+      await page.goto(site_url, timeout=self.page_load_timeout * 1000)
+    else:
+      logger.debug("Reloading page")
+      await page.reload(timeout=self.page_load_timeout * 1000)
 
-  def _ok(self, additional_data: dict | None = None) -> tuple[dict[str, str], int]:
-    return self._json("OK", None, 200, additional_data)
+    page.window_width = await page.evaluate("window.innerWidth")
+    page.window_height = await page.evaluate("window.innerHeight")
 
-  def _json(self, status: str, message: str | None, status_code: int, additional_data: dict | None = None) -> tuple[dict[str, str], int]:
-    """JSON response template"""
-    data = {"status": status, "message": message}
-    if additional_data:
-      data |= additional_data
-    return data, status_code
+    return page
 
+  async def get_browser(self,
+                        playwright: Playwright | None = None,
+                        proxy: Proxy | None = None,
+                        ) -> tuple[Browser, Playwright]:
 
-class _Quart(Quart):
-  def __init__(self, *args, **kwargs):
-    super().__init__(*args, **kwargs)
+    proxy = proxy or self.proxy
 
-  async def make_default_options_response(self) -> Response:
-    res = await super().make_default_options_response()
-    res.headers |= {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "*",
-      "Access-Control-Allow-Private-Network": "true",
-    }
-    return res
+    if not playwright:
+      playwright = await async_playwright().start()
+
+    # ?
+    # browser: Browser | None = await playwright.chromium.launch_persistent_context(no_viewport=True)
+    browser: Browser | None = await playwright.chromium.launch(
+      executable_path=self.browser_executable_path,
+      channel=self.browser,
+      args=self.browser_args,
+      headless=self.headless,
+      proxy=proxy.dict() if proxy else None,
+    )
+    return browser, playwright
+
+  async def get_browser_context(self,
+                                browser: Browser | None = None,
+                                playwright: Playwright | None = None,
+                                proxy: Proxy | None = None,
+                                ) -> tuple[BrowserContext, Playwright]:
+
+    if not browser:
+      browser, _ = await self.get_browser(playwright)
+
+    context = await browser.new_context(
+      proxy=proxy.dict() if proxy else None,
+      no_viewport=True,
+    )
+
+    # await context.route('**', lambda route: route.continue_())
+    # await context.set_extra_http_headers({'HTTP2-Settings': 'MAX_CONCURRENT_STREAMS=100'})
+
+    return context, playwright
