@@ -16,6 +16,7 @@ from turnstile_solver.proxy_provider import ProxyProvider
 from turnstile_solver.solver_console import SolverConsole
 from turnstile_solver.constants import SECRET
 from turnstile_solver.browser_context_pool import BrowserContextPool
+from turnstile_solver.proxy import Proxy
 
 if TYPE_CHECKING:
   from turnstile_solver.solver import TurnstileSolver
@@ -177,23 +178,24 @@ class TurnstileSolverServer:
 
       # If proxy or user_agent is specified, create a temporary browser context
       if proxy_config or user_agent:
-        from turnstile_solver.proxy import Proxy
-        
         # Parse proxy configuration if provided
         proxy = None
         if proxy_config:
           if isinstance(proxy_config, str):
-            # Simple proxy URL format
-            proxy = Proxy(server=proxy_config, username=None, password=None)
-          elif isinstance(proxy_config, dict):
-            # Detailed proxy configuration
-            proxy = Proxy(
-              server=proxy_config.get('server', ''),
-              username=proxy_config.get('username'),
-              password=proxy_config.get('password')
-            )
+            # Parse format: PROXY_HOST:PROXY_PORT:PROXY_USERNAME:PROXY_PASSWORD
+            proxy_parts = proxy_config.split(':')
+            if len(proxy_parts) == 2:
+              # Format: HOST:PORT (no authentication)
+              host, port = proxy_parts
+              proxy = Proxy(server=f"http://{host}:{port}", username=None, password=None)
+            elif len(proxy_parts) == 4:
+              # Format: HOST:PORT:USERNAME:PASSWORD
+              host, port, username, password = proxy_parts
+              proxy = Proxy(server=f"http://{host}:{port}", username=username, password=password)
+            else:
+              return self._bad("Invalid proxy format. Use HOST:PORT or HOST:PORT:USERNAME:PASSWORD")
           else:
-            return self._bad("Invalid proxy format. Use string URL or object with server, username, password")
+            return self._bad("Invalid proxy format. Expected string in format HOST:PORT or HOST:PORT:USERNAME:PASSWORD")
 
         # Create temporary browser context with specific proxy/user_agent
         browser = self.browser_context_pool.browser

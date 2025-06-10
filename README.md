@@ -91,26 +91,22 @@ The `/solve` endpoint accepts the following parameters in the request body:
 |-----------|------|----------|-------------|
 | `site_url` | string | Yes | The URL of the site containing the Turnstile CAPTCHA |
 | `site_key` | string | Yes | The Turnstile site key found in the page source |
-| `proxy` | string or object | No | Proxy configuration for this specific request |
+| `proxy` | string | No | Proxy configuration in format HOST:PORT or HOST:PORT:USERNAME:PASSWORD |
 | `user_agent` | string | No | Custom user agent string for this specific request |
 | `cdata` | string | No | Custom data to be passed to the Turnstile widget |
 
 #### Proxy Parameter
 
-The `proxy` parameter can be specified in two formats:
+The `proxy` parameter should be a string in one of these formats:
 
-**String format** (for proxies without authentication):
+**Without authentication:**
 ```json
-"proxy": "http://proxy.example.com:8080"
+"proxy": "proxy.example.com:8080"
 ```
 
-**Object format** (for proxies with authentication):
+**With authentication:**
 ```json
-"proxy": {
-  "server": "http://proxy.example.com:8080",
-  "username": "proxy_user",
-  "password": "proxy_pass"
-}
+"proxy": "proxy.example.com:8080:username:password"
 ```
 
 #### User Agent Parameter

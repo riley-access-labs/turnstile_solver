@@ -33,6 +33,12 @@ start_xrdp() {
     xrdp-sesman & xrdp -n &
 }
 
+stop_xrdp_services() {
+    xrdp --kill
+    xrdp-sesman --kill
+    exit 0
+}
+
 service_init() {
 
     if [ "$REMOTE_DESKTOP_PROTOCOL" = "RDP" ]; then
@@ -47,17 +53,15 @@ service_init() {
       }
     fi
 
-    # Wait up to 20s fot Xorg to start
-    local timeout=20
-
-    while ((timeout-- > 0)); do
-        pgrep -x Xorg && {
-          echo "Xorg started"
-          return 0
-        }
+    echo "Waiting for X server to be ready..."
+    for i in {1..20}; do
+        if pgrep Xorg >/dev/null; then
+            echo "Xorg is running."
+            return
+        fi
         sleep 1
     done
-    echo "Xorg not started after 20s"
+    
     return 1
 }
 
@@ -107,7 +111,8 @@ user_setup || { echo "User config failed"; exit 1; }
 env_config || exit 2
 repo_setup || exit 3
 install_patchright || exit 4
-service_init || exit 6
+trap "stop_xrdp_services" SIGKILL SIGTERM SIGHUP SIGINT EXIT
+service_init
 
 if [ "$START_SERVER" = "true" ]; then
   echo "Starting server in headful mode..."
