@@ -200,17 +200,19 @@ class TurnstileSolverServer:
         # Create temporary browser context with specific proxy/user_agent
         # We need a separate browser instance for custom proxy/user_agent requests
         # to avoid conflicts with the pooled browser
-        context, playwright = await self.solver.get_browser_context(
-          browser=None,  # This will create a new browser instance
-          playwright=None,
-          proxy=proxy
-        )
-        
-        # Set user agent if provided (must be done after context creation)
-        if user_agent:
-          await context.set_extra_http_headers({"User-Agent": user_agent})
-        
-        page = await context.new_page()
+        try:
+          # Create a fresh browser and context directly
+          browser, playwright = await self.solver.get_browser(proxy=proxy)
+          context = await browser.new_context(no_viewport=True)
+          
+          # Set user agent if provided (must be done after context creation)
+          if user_agent:
+            await context.set_extra_http_headers({"User-Agent": user_agent})
+          
+          page = await context.new_page()
+        except Exception as e:
+          logger.error(f"Failed to create browser context: {e}")
+          return self._error(f"Failed to create browser context: {str(e)}")
 
         try:
           if not (result := await self.solver.solve(
@@ -222,11 +224,23 @@ class TurnstileSolverServer:
           )):
             return self._error(self.solver.error)
         finally:
-          await page.close()
-          await context.close()
-          # Also close the browser we created
-          await context.browser.close()
-          await playwright.stop()
+          try:
+            await page.close()
+          except:
+            pass
+          try:
+            await context.close()
+          except:
+            pass
+          try:
+            # Also close the browser we created
+            await browser.close()
+          except:
+            pass
+          try:
+            await playwright.stop()
+          except:
+            pass
 
       else:
         # Use existing browser context pool for requests without proxy/user_agent
