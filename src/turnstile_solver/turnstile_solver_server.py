@@ -171,28 +171,7 @@ class TurnstileSolverServer:
       if not (site_key := data.get('site_key')):
         return self._bad("site_key required")
 
-      # Extract optional proxy from request
-      proxy_config = data.get('proxy')
       cdata = data.get('cdata')
-
-      # Parse proxy configuration if provided
-      proxy = None
-      if proxy_config:
-        if isinstance(proxy_config, str):
-          # Parse format: PROXY_HOST:PROXY_PORT:PROXY_USERNAME:PROXY_PASSWORD
-          proxy_parts = proxy_config.split(':')
-          if len(proxy_parts) == 2:
-            # Format: HOST:PORT (no authentication)
-            host, port = proxy_parts
-            proxy = Proxy(server=f"{host}:{port}", username=None, password=None)
-          elif len(proxy_parts) == 4:
-            # Format: HOST:PORT:USERNAME:PASSWORD
-            host, port, username, password = proxy_parts
-            proxy = Proxy(server=f"{host}:{port}", username=username, password=password)
-          else:
-            return self._bad("Invalid proxy format. Use HOST:PORT or HOST:PORT:USERNAME:PASSWORD")
-        else:
-          return self._bad("Invalid proxy format. Expected string in format HOST:PORT or HOST:PORT:USERNAME:PASSWORD")
       
       # Use existing browser context pool for all requests
       async with self._lock:
@@ -206,7 +185,6 @@ class TurnstileSolverServer:
             page=page,
             about_blank_on_finish=True,
             cdata=cdata,
-            proxy=proxy,
         )):
           return self._error(self.solver.error)
       finally:
